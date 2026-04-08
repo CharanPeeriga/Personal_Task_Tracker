@@ -9,7 +9,7 @@
   --foreground:         oklch(0.98 0 0);
   --card:               oklch(0.05 0 0);
   --card-foreground:    oklch(0.98 0 0);
-  --primary:            oklch(0.42 0.22 290);   /* dark purple */
+  --primary:            oklch(0.55 0.22 25);    /* pastel red #F23B3B */
   --primary-foreground: oklch(0.98 0 0);
   --secondary:          oklch(0.15 0 0);
   --secondary-foreground: oklch(0.98 0 0);
@@ -48,6 +48,17 @@
   --color-ring:                var(--ring);
 }
 
+/* ─── Shine border ────────────────────────────────────────────────────────── */
+@property --shine-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes shine-border-spin {
+  to { --shine-angle: 360deg; }
+}
+
 /* ─── Ripple animation ────────────────────────────────────────────────────── */
 @keyframes rippling {
   0%   { transform: scale(0); opacity: 0.3; }
@@ -73,7 +84,7 @@
 
 body {
   margin: 0;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--background);

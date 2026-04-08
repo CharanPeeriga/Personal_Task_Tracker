@@ -44,7 +44,7 @@ export const RippleButton = React.forwardRef(
     return (
       <button
         className={cn(
-          "relative flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-purple-900/40 bg-black/60 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-purple-700/60 hover:bg-purple-950/30",
+          "relative flex cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-[#F23B3B]/25 bg-black/60 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-[#F23B3B]/40 hover:bg-[#F23B3B]/10",
           className
         )}
         onClick={handleClick}

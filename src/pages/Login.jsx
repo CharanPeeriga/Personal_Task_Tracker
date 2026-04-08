@@ -5,25 +5,24 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent } from '@/components/ui/card'
+import { GrainGradientBackground } from '@/components/ui/grain-gradient'
+import { ShineBorder } from '@/components/ui/shine-border'
 import { Mail, Lock, ArrowLeft } from 'lucide-react'
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     const { error } = await login(email, password)
-
     if (error) {
       setError(error.message)
       setLoading(false)
@@ -33,13 +32,17 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black px-4">
-      <div className="w-full max-w-md flex flex-col gap-6">
+    <div className="relative min-h-screen flex items-center justify-center bg-black px-4 overflow-hidden">
+
+      {/* Background */}
+      <GrainGradientBackground />
+
+      <div className="relative z-10 w-full max-w-md flex flex-col gap-6">
 
         {/* Back to home */}
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-white transition-colors self-start"
+          className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors self-start"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to home
@@ -48,87 +51,85 @@ export default function Login() {
         {/* Brand */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white tracking-tight">Task Tracker</h1>
-          <p className="text-gray-400 mt-2 text-sm">Sign in to manage your projects</p>
+          <p className="text-white/50 mt-2 text-sm">Sign in to manage your projects</p>
         </div>
 
-        <Card className="rounded-2xl border-gray-800 bg-gray-900 shadow-xl">
-          <CardContent className="p-8 flex flex-col gap-5">
-            <h2 className="text-xl font-semibold text-white">Welcome back</h2>
+        {/* Card */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl p-8 flex flex-col gap-5">
+          <ShineBorder shineColor="#f97316" duration={10} borderWidth={1} />
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <h2 className="relative z-10 text-xl font-semibold text-white">Welcome back</h2>
 
-              {/* Email */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email" className="text-gray-400">Email address</Label>
-                <div className="flex items-center gap-2 border border-gray-700 rounded-lg px-3 h-12 bg-gray-800 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-transparent transition">
-                  <Mail className="h-5 w-5 text-gray-500 shrink-0" />
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-white placeholder:text-gray-500"
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="relative z-10 flex flex-col gap-5">
+
+            {/* Email */}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email" className="text-white/60 text-sm">Email address</Label>
+              <div className="flex items-center gap-2 border border-white/10 rounded-lg px-3 h-12 bg-white/5 focus-within:ring-2 focus-within:ring-[#F23B3B]/60 focus-within:border-transparent transition">
+                <Mail className="h-5 w-5 text-white/30 shrink-0" />
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-white placeholder:text-white/30"
+                />
               </div>
+            </div>
 
-              {/* Password */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password" className="text-gray-400">Password</Label>
-                <div className="flex items-center gap-2 border border-gray-700 rounded-lg px-3 h-12 bg-gray-800 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-transparent transition">
-                  <Lock className="h-5 w-5 text-gray-500 shrink-0" />
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-white placeholder:text-gray-500"
-                  />
-                </div>
+            {/* Password */}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password" className="text-white/60 text-sm">Password</Label>
+              <div className="flex items-center gap-2 border border-white/10 rounded-lg px-3 h-12 bg-white/5 focus-within:ring-2 focus-within:ring-[#F23B3B]/60 focus-within:border-transparent transition">
+                <Lock className="h-5 w-5 text-white/30 shrink-0" />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-white placeholder:text-white/30"
+                />
               </div>
+            </div>
 
-              {/* Remember me & Forgot */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" />
-                  <Label htmlFor="remember" className="text-sm font-normal text-gray-400">
-                    Remember me
-                  </Label>
-                </div>
-                <button
-                  type="button"
-                  className="text-sm text-violet-400 hover:text-violet-300 transition"
-                >
-                  Forgot password?
-                </button>
+            {/* Remember me */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="remember" />
+                <Label htmlFor="remember" className="text-sm font-normal text-white/50">
+                  Remember me
+                </Label>
               </div>
+              <button type="button" className="text-sm text-[#F23B3B] hover:text-[#f87878] transition">
+                Forgot password?
+              </button>
+            </div>
 
-              {/* Error */}
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3">
-                  {error}
-                </div>
-              )}
+            {/* Error */}
+            {error && (
+              <div className="bg-[#F23B3B]/10 border border-red-500/30 text-[#F23B3B] text-sm rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
 
-              {/* Submit */}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full h-12 text-base font-medium rounded-lg bg-violet-600 hover:bg-violet-500"
-              >
-                {loading ? 'Signing in…' : 'Sign in'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            {/* Submit */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 text-base font-medium rounded-lg bg-[#F23B3B] hover:bg-[#c42e2e] text-white"
+            >
+              {loading ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+        </div>
 
-        <p className="text-center text-gray-500 text-sm">
+        <p className="text-center text-white/40 text-sm">
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="text-violet-400 hover:text-violet-300 transition">
+          <Link to="/register" className="text-[#F23B3B] hover:text-[#f87878] transition">
             Create one
           </Link>
         </p>

@@ -10,7 +10,7 @@ import {
 
 // ─── GitHub-style Calendar ────────────────────────────────────────────────────
 
-const CALENDAR_COLORS = ['#1a1a2e', '#4c1d95', '#7c3aed', '#a855f7', '#d8b4fe']
+const CALENDAR_COLORS = ['#1a0a0a', '#4a1010', '#8b1f1f', '#F23B3B', '#f87878']
 
 function GitHubCalendar({ data }) {
   const today     = new Date()
@@ -115,10 +115,10 @@ function ResolvedProject({ project }) {
   const tasks = project.task ?? []
 
   return (
-    <div className="border border-gray-900/60 rounded-xl overflow-hidden bg-black/20 hover:border-purple-900/30 transition-colors">
+    <div className="border border-gray-900/60 rounded-xl overflow-hidden bg-black/20 hover:border-[#F23B3B]/20 transition-colors">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-5 py-4 bg-black/30 hover:bg-purple-950/10 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-5 py-4 bg-black/30 hover:bg-[#F23B3B]/5 transition-colors text-left"
       >
         {open
           ? <ChevronDown  className="h-4 w-4 text-gray-600 shrink-0" />
@@ -146,7 +146,7 @@ function ResolvedProject({ project }) {
                       href={r.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300"
+                      className="inline-flex items-center gap-1 text-xs text-[#F23B3B] hover:text-[#f87878]"
                     >
                       <ExternalLink className="h-3 w-3" />
                       {r.title || r.platform || 'Link'}
@@ -169,7 +169,7 @@ function CompletedTaskRow({ task }) {
     <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-900/60 bg-black/20 opacity-70">
       <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
       <span className="flex-1 text-sm text-gray-500 line-through truncate">{task.title}</span>
-      <span className="text-xs text-purple-500 shrink-0 hidden sm:block">{task.projectTitle}</span>
+      <span className="text-xs text-[#F23B3B] shrink-0 hidden sm:block">{task.projectTitle}</span>
       {task.completed_at && (
         <span className="text-xs text-gray-700 shrink-0">
           {format(new Date(task.completed_at), 'MMM d')}
@@ -239,7 +239,7 @@ export default function Profile() {
             {[
               { label: 'Tasks Completed', value: totalCompleted, color: 'text-green-400' },
               { label: 'Projects Resolved', value: resolvedProjects.length, color: 'text-yellow-400' },
-              { label: 'Active Days', value: calendarData.length, color: 'text-purple-400' },
+              { label: 'Active Days', value: calendarData.length, color: 'text-[#F23B3B]' },
             ].map(({ label, value, color }) => (
               <div key={label} className="flex flex-col gap-1 p-4 rounded-xl border border-gray-900/60 bg-black/30">
                 <span className={cn('text-2xl font-bold', color)}>{value}</span>
@@ -251,7 +251,7 @@ export default function Profile() {
           {/* ── Activity calendar ── */}
           <section className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-purple-400" />
+              <Calendar className="h-4 w-4 text-[#F23B3B]" />
               <h2 className="text-sm font-semibold text-white">Task Completion Activity</h2>
             </div>
             <GitHubCalendar data={calendarData} />

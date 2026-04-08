@@ -1,74 +1,87 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { GrainGradientBackground } from '@/components/ui/grain-gradient'
+import { ShineBorder } from '@/components/ui/shine-border'
+import { ArrowLeft } from 'lucide-react'
 
 export default function Register() {
   const { register } = useAuth()
-  const navigate = useNavigate()
-
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [confirm, setConfirm]   = useState('')
+  const [error, setError]       = useState('')
+  const [success, setSuccess]   = useState('')
+  const [loading, setLoading]   = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setSuccess('')
-
     if (password !== confirm) {
       setError('Passwords do not match.')
       return
     }
-
     setLoading(true)
     const { error } = await register(email, password)
-
     if (error) {
       setError(error.message)
       setLoading(false)
     } else {
-      // Supabase sends a confirmation email by default.
-      // If email confirmation is disabled in your Supabase project, navigate directly.
       setSuccess('Account created! Check your email to confirm, then sign in.')
       setLoading(false)
     }
   }
 
+  const inputCls = "w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#F23B3B]/60 focus:border-transparent transition"
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 px-4">
-      <div className="w-full max-w-md">
-        {/* Logo / Brand */}
-        <div className="text-center mb-8">
+    <div className="relative min-h-screen flex items-center justify-center bg-black px-4 overflow-hidden">
+
+      {/* Background */}
+      <GrainGradientBackground />
+
+      <div className="relative z-10 w-full max-w-md flex flex-col gap-6">
+
+        {/* Back */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors self-start"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to home
+        </Link>
+
+        {/* Brand */}
+        <div className="text-center">
           <h1 className="text-3xl font-bold text-white tracking-tight">Task Tracker</h1>
-          <p className="text-gray-400 mt-2 text-sm">Create your free account</p>
+          <p className="text-white/50 mt-2 text-sm">Create your free account</p>
         </div>
 
         {/* Card */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-xl">
-          <h2 className="text-xl font-semibold text-white mb-6">Get started</h2>
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl p-8">
+          <ShineBorder shineColor="#f97316" duration={10} borderWidth={1} />
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">
-                Email address
-              </label>
+          <h2 className="relative z-10 text-xl font-semibold text-white mb-6">Get started</h2>
+
+          <form onSubmit={handleSubmit} className="relative z-10 space-y-5">
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-white/60 text-sm">Email address</Label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                className={inputCls}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">
-                Password
-              </label>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-white/60 text-sm">Password</Label>
               <input
                 type="password"
                 required
@@ -76,26 +89,24 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 6 characters"
-                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                className={inputCls}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">
-                Confirm password
-              </label>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-white/60 text-sm">Confirm password</Label>
               <input
                 type="password"
                 required
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                className={inputCls}
               />
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3">
+              <div className="bg-[#F23B3B]/10 border border-red-500/30 text-[#F23B3B] text-sm rounded-lg px-4 py-3">
                 {error}
               </div>
             )}
@@ -106,19 +117,19 @@ export default function Register() {
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg py-2.5 text-sm transition"
+              className="w-full h-11 bg-[#F23B3B] hover:bg-[#c42e2e] disabled:opacity-50 text-white font-medium rounded-lg text-sm"
             >
               {loading ? 'Creating account…' : 'Create account'}
-            </button>
+            </Button>
           </form>
         </div>
 
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-white/40 text-sm">
           Already have an account?{' '}
-          <Link to="/login" className="text-violet-400 hover:text-violet-300 transition">
+          <Link to="/login" className="text-[#F23B3B] hover:text-[#f87878] transition">
             Sign in
           </Link>
         </p>

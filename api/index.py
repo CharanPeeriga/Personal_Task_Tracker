@@ -70,6 +70,7 @@ class ProjectCreate(BaseModel):
     description: Optional[str] = None
     deadline: Optional[datetime] = None
     priority_level: Optional[int] = None
+    due_date: Optional[datetime] = None
 
 class ProjectUpdate(BaseModel):
     title: Optional[str] = None
@@ -77,6 +78,7 @@ class ProjectUpdate(BaseModel):
     deadline: Optional[datetime] = None
     isarchived: Optional[bool] = None  # Notice this is all lowercase!
     priority_level: Optional[int] = None
+    due_date: Optional[datetime] = None
 
 # --- Task Models ---
 class TaskCreate(BaseModel):
@@ -86,6 +88,7 @@ class TaskCreate(BaseModel):
     completed: Optional[bool] = False
     project_id: int  # Required!
     block_id: Optional[int] = None
+    due_date: Optional[datetime] = None
 
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
@@ -95,6 +98,7 @@ class TaskUpdate(BaseModel):
     completed_at: Optional[datetime] = None
     project_id: Optional[int] = None
     block_id: Optional[int] = None
+    due_date: Optional[datetime] = None
 
 
 class AssignTasksRequest(BaseModel):
@@ -145,6 +149,8 @@ def create_project(project: ProjectCreate, authorization: str = Header(...), sup
     # 3. Prepare the data, injecting the user_id
     project_data = project.dict(exclude_unset=True)
     project_data["user_id"] = user_id
+    if "due_date" in project_data and project_data["due_date"]:
+        project_data["due_date"] = project_data["due_date"].isoformat()
 
     # 4. Insert into Supabase
     response = supabase.table("project").insert(project_data).execute()
@@ -182,6 +188,8 @@ def create_task(task: TaskCreate, authorization: str = Header(...), supabase: Cl
     # 2. Prepare data
     task_data = task.dict(exclude_unset=True)
     task_data["user_id"] = user_response.user.id
+    if "due_date" in task_data and task_data["due_date"]:
+        task_data["due_date"] = task_data["due_date"].isoformat()
 
     # 3. Insert securely
     response = supabase.table("task").insert(task_data).execute()

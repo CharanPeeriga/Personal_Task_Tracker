@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { LayoutDashboard, CalendarDays, LogOut, UserCircle } from 'lucide-react'
-import { FallingPattern } from '@/components/ui/falling-pattern'
+import { GrainGradientBackground } from '@/components/ui/grain-gradient'
 import { RippleButton } from '@/components/ui/ripple-button'
 import { cn } from '@/lib/utils'
 
@@ -19,7 +19,7 @@ export default function DashboardLayout({ children }) {
     <div className="flex flex-col h-screen bg-black text-white overflow-hidden">
 
       {/* ── Top Nav ── */}
-      <header className="relative z-20 h-14 shrink-0 flex items-center justify-between px-6 bg-black/40 border-b border-purple-900/20 backdrop-blur-md">
+      <header className="relative z-20 h-14 shrink-0 flex items-center justify-between px-6 bg-black/40 border-b border-[#F23B3B]/15 backdrop-blur-md">
         <div className="flex items-center gap-6">
           <span className="text-sm font-bold tracking-tight text-white/90">Task Tracker</span>
           <nav className="flex items-center gap-1">
@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }) {
                 className={cn(
                   'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   location.pathname === href
-                    ? 'bg-purple-900/40 text-purple-300'
+                    ? 'bg-[#F23B3B]/20 text-[#F23B3B]'
                     : 'text-gray-500 hover:bg-white/5 hover:text-white'
                 )}
               >
@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }) {
           )}
           <RippleButton
             onClick={logout}
-            rippleColor="#a855f7"
+            rippleColor="#F23B3B"
             className="text-gray-400 hover:text-white border-gray-800/60 bg-transparent hover:bg-white/5 text-xs px-3 py-1.5"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -59,14 +59,7 @@ export default function DashboardLayout({ children }) {
       {/* ── Main area ── */}
       <div className="relative flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Animated background */}
-        <div className="absolute inset-0 pointer-events-none opacity-60">
-          <FallingPattern
-            color="var(--primary)"
-            backgroundColor="oklch(0 0 0)"
-            blurIntensity="0.4em"
-            className="h-full w-full"
-          />
-        </div>
+        <GrainGradientBackground />
 
         <main className="relative z-10 flex-1 overflow-auto p-6">
           {children}
