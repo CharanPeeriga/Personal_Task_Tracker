@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Schedule from './pages/Schedule'
+import Profile from './pages/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './components/DashboardLayout'
 
@@ -39,6 +40,17 @@ export default function App() {
           <ProtectedRoute>
             <DashboardLayout>
               <Schedule />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <Profile />
             </DashboardLayout>
           </ProtectedRoute>
         }

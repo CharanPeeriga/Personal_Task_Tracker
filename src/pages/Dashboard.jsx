@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import confetti from 'canvas-confetti'
 import api from '@/api/axiosInstance'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +11,42 @@ import {
   AlertCircle, Loader2, Trash2, AlertTriangle, LayoutGrid, FolderPlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+
+function fireConfetti(clientX, clientY) {
+  const x = clientX / window.innerWidth
+  const y = clientY / window.innerHeight
+
+  confetti({
+    particleCount: 80,
+    spread: 60,
+    startVelocity: 28,
+    decay: 0.92,
+    scalar: 0.9,
+    origin: { x, y },
+    colors: ['#a855f7', '#d946ef', '#f59e0b', '#10b981', '#3b82f6', '#f97316', '#e879f9'],
+    ticks: 180,
+    gravity: 1.1,
+    drift: 0,
+    shapes: ['square', 'circle'],
+  })
+
+  // Second smaller burst for depth
+  setTimeout(() => {
+    confetti({
+      particleCount: 30,
+      spread: 80,
+      startVelocity: 15,
+      decay: 0.9,
+      scalar: 0.6,
+      origin: { x, y },
+      colors: ['#ffffff', '#a855f7', '#ec4899'],
+      ticks: 120,
+      gravity: 0.8,
+    })
+  }, 80)
+}
 
 // ─── Data helpers ─────────────────────────────────────────────────────────────
 
@@ -325,8 +362,15 @@ function ConfirmDeleteModal({ title, message, onConfirm, onCancel }) {
 
 // ─── TaskRow ──────────────────────────────────────────────────────────────────
 
-function TaskRow({ task, onDelete }) {
+function TaskRow({ task, onDelete, onToggleComplete }) {
   const done = task.completed
+  const checkRef = useRef(null)
+
+  function handleCheckClick() {
+    const rect = checkRef.current?.getBoundingClientRect()
+    if (!done && rect) fireConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    onToggleComplete(task.task_id, !done)
+  }
 
   return (
     <div className={cn(
@@ -336,41 +380,48 @@ function TaskRow({ task, onDelete }) {
         : 'border-gray-900/60 bg-black/30 hover:border-purple-900/50 hover:bg-black/40'
     )}>
       <div className="flex items-start gap-3">
-        {done
-          ? <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
-          : <Circle       className="h-4 w-4 text-gray-700 mt-0.5 shrink-0" />
-        }
-        <div className="flex-1 min-w-0">
-          <span className={cn('text-sm font-medium', done ? 'line-through text-gray-600' : 'text-white')}>
-            {task.title}
-          </span>
+        <button
+          ref={checkRef}
+          onClick={handleCheckClick}
+          className="mt-0.5 shrink-0 transition-colors hover:scale-110"
+          title={done ? 'Mark incomplete' : 'Mark complete'}
+        >
+          {done
+            ? <CheckCircle2 className="h-4 w-4 text-green-600 hover:text-gray-500 transition-colors" />
+            : <Circle       className="h-4 w-4 text-gray-700 hover:text-green-500 transition-colors" />
+          }
+        </button>
+          <div className="flex-1 min-w-0">
+            <span className={cn('text-sm font-medium', done ? 'line-through text-gray-600' : 'text-white')}>
+              {task.title}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <DurationBadge minutes={task.est_duration} />
+            {task.priority_level && <PriorityBadge level={task.priority_level} />}
+            <button
+              onClick={() => onDelete(task.task_id)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400"
+              title="Delete task"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <DurationBadge minutes={task.est_duration} />
-          {task.priority_level && <PriorityBadge level={task.priority_level} />}
-          <button
-            onClick={() => onDelete(task.task_id)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400"
-            title="Delete task"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-2 pl-7">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-950/40 border border-purple-900/30 text-purple-400">
-          <Layers className="h-3 w-3" />
-          {task.projectTitle}
-        </span>
-        {(task.tag ?? []).map((t) => <TagPill key={t.tag_id} tag={t} />)}
-        {(task.resource ?? []).map((r) => <ResourceLink key={r.resource_id} resource={r} />)}
-      </div>
+        <div className="flex flex-wrap items-center gap-2 pl-7">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-950/40 border border-purple-900/30 text-purple-400">
+            <Layers className="h-3 w-3" />
+            {task.projectTitle}
+          </span>
+          {(task.tag ?? []).map((t) => <TagPill key={t.tag_id} tag={t} />)}
+          {(task.resource ?? []).map((r) => <ResourceLink key={r.resource_id} resource={r} />)}
+        </div>
     </div>
   )
 }
 
-function AllTasksView({ directory, onDeleteTask }) {
+function AllTasksView({ directory, onDeleteTask, onToggleComplete }) {
   const tasks = flattenTasks(directory)
 
   if (tasks.length === 0) {
@@ -390,7 +441,7 @@ function AllTasksView({ directory, onDeleteTask }) {
   return (
     <div className="flex flex-col gap-2">
       {sorted.map((task) => (
-        <TaskRow key={task.task_id} task={task} onDelete={onDeleteTask} />
+        <TaskRow key={task.task_id} task={task} onDelete={onDeleteTask} onToggleComplete={onToggleComplete} />
       ))}
     </div>
   )
@@ -398,7 +449,37 @@ function AllTasksView({ directory, onDeleteTask }) {
 
 // ─── Project Tiles View (default) ─────────────────────────────────────────────
 
-function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask }) {
+function TileTaskRow({ task, onToggleComplete }) {
+  const checkRef = useRef(null)
+
+  function handleCheck(e) {
+    e.stopPropagation()
+    const rect = checkRef.current?.getBoundingClientRect()
+    if (!task.completed && rect) fireConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    onToggleComplete(task.task_id, !task.completed)
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button ref={checkRef} onClick={handleCheck} className="shrink-0 hover:scale-110 transition-transform">
+        {task.completed
+          ? <CheckCircle2 className="h-3 w-3 text-green-700 hover:text-gray-500 transition-colors" />
+          : <Circle       className="h-3 w-3 text-gray-700 hover:text-green-500 transition-colors" />
+        }
+      </button>
+      <span className={cn('text-xs truncate', task.completed ? 'line-through text-gray-600' : 'text-gray-300')}>
+        {task.title}
+      </span>
+      {task.priority_level && (
+        <span className={cn('text-xs font-bold ml-auto shrink-0', PRIORITY_STYLES[task.priority_level]?.class ?? '')}>
+          {PRIORITY_STYLES[task.priority_level]?.label}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, onToggleComplete }) {
   const tasks    = project.task ?? []
   const done     = tasks.filter((t) => t.completed).length
   const preview  = tasks.slice(0, 3)
@@ -417,74 +498,92 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask }) 
 
   return (
     <>
-      <div className="group flex flex-col bg-black/30 backdrop-blur-sm border border-gray-900/60 rounded-2xl overflow-hidden hover:border-purple-900/40 transition-all hover:bg-black/40">
+      {/* Hover pop-out wrapper */}
+      <div className="group cursor-default transform transition-all duration-500 hover:scale-105 hover:-rotate-1">
 
-        {/* Tile header */}
-        <div className="flex items-start justify-between px-5 pt-5 pb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-white truncate">{project.title}</h3>
-            <div className="flex items-center gap-2 mt-1">
-              {project.priority_level && <PriorityBadge level={project.priority_level} />}
-              <span className="text-xs text-gray-600">{done}/{tasks.length} done</span>
-            </div>
+        {/* Card */}
+        <div className="relative flex flex-col rounded-2xl border border-white/10 bg-gradient-to-br from-[#060608] via-[#0d0d12] to-[#060608] shadow-2xl backdrop-blur-xl overflow-hidden hover:border-white/20 hover:shadow-purple-900/20 hover:shadow-2xl transition-all duration-500">
+
+          {/* ── Animated background glows ── */}
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-tr from-purple-900/10 to-purple-600/5 opacity-40 group-hover:opacity-70 transition-opacity duration-500" />
+            <div className="absolute -bottom-16 -left-16 w-40 h-40 rounded-full bg-gradient-to-tr from-purple-800/20 to-transparent blur-3xl opacity-30 group-hover:opacity-60 group-hover:scale-110 transform transition-all duration-700 animate-pulse" />
+            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-purple-500/5 blur-xl animate-ping" style={{ animationDuration: '3s' }} />
+            {/* Sheen sweep */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 translate-x-full group-hover:-translate-x-full transition-transform duration-1000" />
           </div>
-          <button
-            onClick={handleDeleteClick}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 ml-2 mt-0.5 shrink-0"
-            title="Delete project"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
 
-        {/* Progress bar */}
-        {tasks.length > 0 && (
-          <div className="px-5 pb-3">
-            <div className="h-1 w-full rounded-full bg-gray-900/60 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-purple-700/80 transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        )}
+          {/* ── Corner accents ── */}
+          <div className="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-white/8 to-transparent rounded-br-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
+          <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-purple-500/10 to-transparent rounded-tl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 
-        {/* Task preview */}
-        <div className="flex-1 px-5 pb-3 flex flex-col gap-1.5">
-          {tasks.length === 0 ? (
-            <p className="text-xs text-gray-700 py-2 text-center">No tasks yet.</p>
-          ) : (
-            preview.map((task) => (
-              <div key={task.task_id} className="flex items-center gap-2">
-                {task.completed
-                  ? <CheckCircle2 className="h-3 w-3 text-green-700 shrink-0" />
-                  : <Circle       className="h-3 w-3 text-gray-700 shrink-0" />
-                }
-                <span className={cn('text-xs truncate', task.completed ? 'line-through text-gray-600' : 'text-gray-300')}>
-                  {task.title}
-                </span>
-                {task.priority_level && (
-                  <span className={cn('text-xs font-bold ml-auto shrink-0', PRIORITY_STYLES[task.priority_level]?.class ?? '')}>
-                    {PRIORITY_STYLES[task.priority_level]?.label}
-                  </span>
-                )}
+          {/* ── Content ── */}
+          <div className="relative z-10 flex flex-col flex-1">
+
+            {/* Header */}
+            <div className="flex items-start justify-between px-5 pt-5 pb-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-white truncate group-hover:text-purple-100 transition-colors duration-300">
+                  {project.title}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  {project.priority_level && <PriorityBadge level={project.priority_level} />}
+                  <span className="text-xs text-gray-600">{done}/{tasks.length} done</span>
+                </div>
               </div>
-            ))
-          )}
-          {tasks.length > 3 && (
-            <p className="text-xs text-gray-700 mt-0.5">+{tasks.length - 3} more</p>
-          )}
-        </div>
+              <button
+                onClick={handleDeleteClick}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 ml-2 mt-0.5 shrink-0"
+                title="Delete project"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
 
-        {/* See all tasks */}
-        <div className="px-5 pb-4 pt-1 border-t border-gray-900/40">
-          <RippleButton
-            onClick={() => onSeeAllTasks(project.project_id)}
-            rippleColor="#a855f7"
-            className="w-full justify-center text-purple-400 hover:text-purple-300 border-purple-900/30 bg-purple-950/20 hover:bg-purple-950/30 text-xs py-1.5"
-          >
-            See all tasks
-          </RippleButton>
+            {/* Progress bar */}
+            {tasks.length > 0 && (
+              <div className="px-5 pb-3">
+                <div className="h-1 w-full rounded-full bg-white/5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-purple-700 to-purple-400 transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Task preview */}
+            <div className="flex-1 px-5 pb-3 flex flex-col gap-1.5">
+              {tasks.length === 0 ? (
+                <p className="text-xs text-gray-700 py-2 text-center">No tasks yet.</p>
+              ) : (
+                preview.map((task) => (
+                  <TileTaskRow key={task.task_id} task={task} onToggleComplete={onToggleComplete} />
+                ))
+              )}
+              {tasks.length > 3 && (
+                <p className="text-xs text-gray-700 mt-0.5">+{tasks.length - 3} more</p>
+              )}
+            </div>
+
+            {/* Divider dots */}
+            <div className="flex justify-center gap-1.5 pb-3 opacity-30 group-hover:opacity-70 transition-opacity duration-300">
+              {[0, 0.1, 0.2].map((delay) => (
+                <div key={delay} className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: `${delay}s` }} />
+              ))}
+            </div>
+
+            {/* See all tasks */}
+            <div className="px-5 pb-4 pt-1 border-t border-white/5">
+              <RippleButton
+                onClick={() => onSeeAllTasks(project.project_id)}
+                rippleColor="#a855f7"
+                className="w-full justify-center text-purple-400 hover:text-purple-300 border-purple-900/30 bg-purple-950/20 hover:bg-purple-950/30 text-xs py-1.5"
+              >
+                See all tasks
+              </RippleButton>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -500,7 +599,7 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask }) 
   )
 }
 
-function ProjectsTileView({ directory, onSeeAllTasks, onDeleteProject, onDeleteTask }) {
+function ProjectsTileView({ directory, onSeeAllTasks, onDeleteProject, onDeleteTask, onToggleComplete }) {
   if (directory.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-600 text-sm gap-2">
@@ -519,6 +618,7 @@ function ProjectsTileView({ directory, onSeeAllTasks, onDeleteProject, onDeleteT
           onSeeAllTasks={onSeeAllTasks}
           onDeleteProject={onDeleteProject}
           onDeleteTask={onDeleteTask}
+          onToggleComplete={onToggleComplete}
         />
       ))}
     </div>
@@ -527,7 +627,58 @@ function ProjectsTileView({ directory, onSeeAllTasks, onDeleteProject, onDeleteT
 
 // ─── Projects Directory View (accordion) ─────────────────────────────────────
 
-function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDeleteTask }) {
+function AccordionTaskRow({ task, onDeleteTask, onToggleComplete }) {
+  const checkRef = useRef(null)
+
+  function handleCheck() {
+    const rect = checkRef.current?.getBoundingClientRect()
+    if (!task.completed && rect) fireConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    onToggleComplete(task.task_id, !task.completed)
+  }
+
+  return (
+    <div className={cn(
+      'group px-5 py-3.5 flex flex-col gap-2 hover:bg-purple-950/10 transition-colors',
+      task.completed && 'opacity-50'
+    )}>
+      <div className="flex items-center gap-3">
+        <button
+          ref={checkRef}
+          onClick={handleCheck}
+          className="shrink-0 hover:scale-110 transition-transform"
+          title={task.completed ? 'Mark incomplete' : 'Mark complete'}
+        >
+          {task.completed
+            ? <CheckCircle2 className="h-4 w-4 text-green-600 hover:text-gray-500 transition-colors" />
+            : <Circle       className="h-4 w-4 text-gray-700 hover:text-green-500 transition-colors" />
+          }
+        </button>
+        <span className={cn('flex-1 text-sm', task.completed ? 'line-through text-gray-600' : 'text-gray-200')}>
+          {task.title}
+        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <DurationBadge minutes={task.est_duration} />
+          {task.priority_level && <PriorityBadge level={task.priority_level} />}
+          <button
+            onClick={() => onDeleteTask(task.task_id)}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400"
+            title="Delete task"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+      {((task.tag?.length ?? 0) > 0 || (task.resource?.length ?? 0) > 0) && (
+        <div className="flex flex-wrap items-center gap-2 pl-7">
+          {(task.tag ?? []).map((t) => <TagPill key={t.tag_id} tag={t} />)}
+          {(task.resource ?? []).map((r) => <ResourceLink key={r.resource_id} resource={r} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDeleteTask, onToggleComplete }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const tasks = project.task ?? []
   const done  = tasks.filter((t) => t.completed).length
@@ -580,37 +731,12 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
               <p className="px-10 py-4 text-sm text-gray-700 text-center">No tasks in this project.</p>
             )}
             {tasks.map((task) => (
-              <div key={task.task_id} className={cn(
-                'group px-5 py-3.5 flex flex-col gap-2 hover:bg-purple-950/10 transition-colors',
-                task.completed && 'opacity-50'
-              )}>
-                <div className="flex items-center gap-3">
-                  {task.completed
-                    ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                    : <Circle       className="h-4 w-4 text-gray-700 shrink-0" />
-                  }
-                  <span className={cn('flex-1 text-sm', task.completed ? 'line-through text-gray-600' : 'text-gray-200')}>
-                    {task.title}
-                  </span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <DurationBadge minutes={task.est_duration} />
-                    {task.priority_level && <PriorityBadge level={task.priority_level} />}
-                    <button
-                      onClick={() => onDeleteTask(task.task_id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400"
-                      title="Delete task"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-                {((task.tag?.length ?? 0) > 0 || (task.resource?.length ?? 0) > 0) && (
-                  <div className="flex flex-wrap items-center gap-2 pl-7">
-                    {(task.tag ?? []).map((t) => <TagPill key={t.tag_id} tag={t} />)}
-                    {(task.resource ?? []).map((r) => <ResourceLink key={r.resource_id} resource={r} />)}
-                  </div>
-                )}
-              </div>
+              <AccordionTaskRow
+                key={task.task_id}
+                task={task}
+                onDeleteTask={onDeleteTask}
+                onToggleComplete={onToggleComplete}
+              />
             ))}
           </div>
         )}
@@ -628,7 +754,7 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
   )
 }
 
-function ProjectsDirectoryView({ directory, expandedProjects, onToggleExpand, onDeleteProject, onDeleteTask }) {
+function ProjectsDirectoryView({ directory, expandedProjects, onToggleExpand, onDeleteProject, onDeleteTask, onToggleComplete }) {
   if (directory.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-600 text-sm gap-2">
@@ -648,6 +774,7 @@ function ProjectsDirectoryView({ directory, expandedProjects, onToggleExpand, on
           onToggle={() => onToggleExpand(project.project_id)}
           onDeleteProject={onDeleteProject}
           onDeleteTask={onDeleteTask}
+          onToggleComplete={onToggleComplete}
         />
       ))}
     </div>
@@ -698,6 +825,27 @@ export default function Dashboard() {
       await fetchDirectory()
     } finally {
       setIsDeletingGlobal(false)
+    }
+  }
+
+  async function handleToggleComplete(taskId, completed) {
+    // Optimistically update local state so the UI snaps immediately
+    setDirectory((prev) =>
+      prev.map((project) => ({
+        ...project,
+        task: (project.task ?? []).map((t) =>
+          t.task_id === taskId ? { ...t, completed } : t
+        ),
+      }))
+    )
+    try {
+      const payload = completed
+        ? { completed: true }
+        : { completed: false, completed_at: null }
+      await api.put(`/tasks/${taskId}`, payload)
+    } catch {
+      // Roll back on failure
+      await fetchDirectory()
     }
   }
 
@@ -803,11 +951,12 @@ export default function Dashboard() {
           onSeeAllTasks={handleSeeAllTasks}
           onDeleteProject={handleDeleteProject}
           onDeleteTask={handleDeleteTask}
+          onToggleComplete={handleToggleComplete}
         />
       )}
 
       {!loading && !error && activeView === 'tasks' && (
-        <AllTasksView directory={directory} onDeleteTask={handleDeleteTask} />
+        <AllTasksView directory={directory} onDeleteTask={handleDeleteTask} onToggleComplete={handleToggleComplete} />
       )}
 
       {!loading && !error && activeView === 'directory' && (
@@ -817,6 +966,7 @@ export default function Dashboard() {
           onToggleExpand={toggleExpand}
           onDeleteProject={handleDeleteProject}
           onDeleteTask={handleDeleteTask}
+          onToggleComplete={handleToggleComplete}
         />
       )}
 

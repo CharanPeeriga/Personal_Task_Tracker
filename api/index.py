@@ -92,6 +92,7 @@ class TaskUpdate(BaseModel):
     est_duration: Optional[int] = None
     priority_level: Optional[int] = None
     completed: Optional[bool] = None
+    completed_at: Optional[datetime] = None
     project_id: Optional[int] = None
     block_id: Optional[int] = None
 
@@ -194,12 +195,19 @@ def get_all_tasks(supabase: Client = Depends(get_supabase_client)):
 
 @app.put("/tasks/{task_id}")
 def update_task(task_id: int, task_update: TaskUpdate, supabase: Client = Depends(get_supabase_client)):
-    # This is perfect for marking tasks as 'completed: true' later!
     update_data = task_update.dict(exclude_unset=True)
-    
+
     if not update_data:
         return {"message": "No fields provided to update"}
-        
+
+    # Auto-set completed_at timestamp when marking as complete
+    if update_data.get("completed") is True and "completed_at" not in update_data:
+        update_data["completed_at"] = datetime.utcnow().isoformat()
+
+    # Serialize datetime objects to strings for Supabase
+    if "completed_at" in update_data and isinstance(update_data["completed_at"], datetime):
+        update_data["completed_at"] = update_data["completed_at"].isoformat()
+
     response = supabase.table("task").update(update_data).eq("task_id", task_id).execute()
     return response.data
 
@@ -386,3 +394,38 @@ def get_project_directory(supabase: Client = Depends(get_supabase_client)):
 def get_blocks_directory(supabase: Client = Depends(get_supabase_client)):
     response = supabase.table("time_block").select("*, task(*, resource(*), tag(*))").execute()
     return response.data
+
+@app.get("/profile-data")
+def get_profile_data(supabase: Client = Depends(get_supabase_client)):
+    # Fetch all projects with their tasks
+    projects_response = supabase.table("project").select("*, task(*, resource(*), tag(*))").execute()
+    projects = projects_response.data
+
+    # Completed tasks (for calendar and resolved tasks list)
+    completed_tasks = []
+    calendar_counts: dict = {}
+
+    for project in projects:
+        for task in project.get("task", []):
+            if task.get("completed"):
+                task["projectTitle"] = project["title"]
+                completed_tasks.append(task)
+                # Group by date for calendar
+                completed_at = task.get("completed_at")
+                if completed_at:
+                    date_key = completed_at[:10]  # YYYY-MM-DD
+                    calendar_counts[date_key] = calendar_counts.get(date_key, 0) + 1
+
+    calendar_data = [{"date": k, "count": v} for k, v in calendar_counts.items()]
+
+    # Resolved projects: all tasks completed (must have at least one task)
+    resolved_projects = [
+        p for p in projects
+        if p.get("task") and all(t.get("completed") for t in p["task"])
+    ]
+
+    return {
+        "calendar_data": calendar_data,
+        "resolved_projects": resolved_projects,
+        "completed_tasks": completed_tasks,
+    }

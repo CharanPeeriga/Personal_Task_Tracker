@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, CalendarDays, LogOut } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, LogOut, UserCircle } from 'lucide-react'
 import { FallingPattern } from '@/components/ui/falling-pattern'
 import { RippleButton } from '@/components/ui/ripple-button'
 import { cn } from '@/lib/utils'
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Schedule',  href: '/schedule',  icon: CalendarDays },
+  { label: 'Profile',   href: '/profile',   icon: UserCircle },
 ]
 
 export default function DashboardLayout({ children }) {
