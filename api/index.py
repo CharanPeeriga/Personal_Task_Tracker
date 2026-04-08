@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, Depends, HTTPException, Header
+from starlette.middleware.base import BaseHTTPMiddleware
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -20,6 +21,17 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 # Initialize FastAPI
 app = FastAPI(title="Personal Task Tracker API")
+
+# Vercel passes the full path (e.g. /api/projects) to the ASGI app, but all
+# routes are defined without the /api prefix.  This middleware strips it so
+# both local dev (where Vite already strips /api) and Vercel work identically.
+class StripApiPrefixMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        if request.scope["path"].startswith("/api/"):
+            request.scope["path"] = request.scope["path"][4:]  # /api/x -> /x
+        return await call_next(request)
+
+app.add_middleware(StripApiPrefixMiddleware)
 
 # --- OPTION B: Secure RLS Dependency ---
 # This function intercepts the Authorization header sent by your frontend.
