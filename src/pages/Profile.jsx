@@ -73,7 +73,7 @@ function GitHubCalendar({ data }) {
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
   return (
-    <div className="p-5 border border-gray-900/60 rounded-2xl bg-black/30 backdrop-blur-sm overflow-x-auto">
+    <div className="p-5 border border-[#4a1010]/50 rounded-2xl bg-gradient-to-br from-[#1a0a0a]/75 to-black/75 backdrop-blur-sm overflow-x-auto">
       <div className="flex">
         <div className="flex flex-col justify-between mt-6 mr-2 shrink-0">
           {dayLabels.map((d) => (
@@ -115,7 +115,7 @@ function ResolvedProject({ project }) {
   const tasks = project.task ?? []
 
   return (
-    <div className="border border-gray-900/60 rounded-xl overflow-hidden bg-black/20 hover:border-[#F23B3B]/20 transition-colors">
+    <div className="border border-[#4a1010]/50 rounded-xl overflow-hidden bg-gradient-to-br from-[#1a0a0a]/75 to-black/75 hover:border-[#F23B3B]/30 transition-all duration-300">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-3 px-5 py-4 bg-black/30 hover:bg-[#F23B3B]/5 transition-colors text-left"
@@ -166,7 +166,7 @@ function ResolvedProject({ project }) {
 
 function CompletedTaskRow({ task }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-900/60 bg-black/20 opacity-70">
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#4a1010]/40 bg-white/5 opacity-70 hover:opacity-100 transition-opacity duration-200">
       <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
       <span className="flex-1 text-sm text-gray-500 line-through truncate">{task.title}</span>
       <span className="text-xs text-[#F23B3B] shrink-0 hidden sm:block">{task.projectTitle}</span>
@@ -241,7 +241,7 @@ export default function Profile() {
               { label: 'Projects Resolved', value: resolvedProjects.length, color: 'text-yellow-400' },
               { label: 'Active Days', value: calendarData.length, color: 'text-[#F23B3B]' },
             ].map(({ label, value, color }) => (
-              <div key={label} className="flex flex-col gap-1 p-4 rounded-xl border border-gray-900/60 bg-black/30">
+              <div key={label} className="flex flex-col gap-1 p-4 rounded-xl border border-[#4a1010]/50 bg-gradient-to-br from-[#1a0a0a]/80 to-black/80 backdrop-blur-sm hover:border-[#F23B3B]/25 transition-all duration-300">
                 <span className={cn('text-2xl font-bold', color)}>{value}</span>
                 <span className="text-xs text-gray-600">{label}</span>
               </div>

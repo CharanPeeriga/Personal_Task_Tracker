@@ -201,6 +201,7 @@ def get_all_tasks(supabase: Client = Depends(get_supabase_client)):
     response = supabase.table("task").select("*").execute()
     return response.data
 
+@app.patch("/tasks/{task_id}")
 @app.put("/tasks/{task_id}")
 def update_task(task_id: int, task_update: TaskUpdate, supabase: Client = Depends(get_supabase_client)):
     update_data = task_update.dict(exclude_unset=True)

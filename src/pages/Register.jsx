@@ -35,7 +35,7 @@ export default function Register() {
     }
   }
 
-  const inputCls = "w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#F23B3B]/60 focus:border-transparent transition"
+  const inputCls = "w-full bg-white/5 border border-[#4a1010] text-white rounded-lg px-4 py-2.5 text-sm placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#F23B3B] focus:border-[#F23B3B] transition-colors"
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-black px-4 overflow-hidden">
@@ -62,7 +62,7 @@ export default function Register() {
 
         {/* Card */}
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl p-8">
-          <ShineBorder shineColor="#f97316" duration={10} borderWidth={1} />
+          <ShineBorder shineColor="#F23B3B" duration={10} borderWidth={1} />
 
           <h2 className="relative z-10 text-xl font-semibold text-white mb-6">Get started</h2>
 
@@ -120,7 +120,7 @@ export default function Register() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-[#F23B3B] hover:bg-[#c42e2e] disabled:opacity-50 text-white font-medium rounded-lg text-sm"
+              className="w-full h-11 bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] disabled:opacity-50 text-white font-medium rounded-lg text-sm border-0 transition-all duration-300 shadow-lg shadow-[#F23B3B]/20"
             >
               {loading ? 'Creating account…' : 'Create account'}
             </Button>

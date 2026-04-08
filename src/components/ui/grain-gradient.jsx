@@ -4,7 +4,7 @@ export function GrainGradientBackground({ className }) {
   return (
     <div
       className={className}
-      style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.6, pointerEvents: 'none' }}
+      style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.5, pointerEvents: 'none' }}
     >
       <GrainGradient
         style={{ height: "100%", width: "100%" }}

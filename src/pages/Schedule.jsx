@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'react-toastify'
 import api from '@/api/axiosInstance'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { DotFlowButton } from '@/components/ui/dot-flow-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -9,8 +11,8 @@ import {
   DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
 import {
-  ChevronLeft, ChevronRight, Plus, Calendar, Clock, Grid3x3,
-  Loader2, Sparkles, CheckCircle2, Circle,
+  ChevronLeft, ChevronRight, Calendar, Clock, Grid3x3,
+  Loader2, CheckCircle2, Circle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -43,13 +45,6 @@ function isSameDay(a, b) {
   )
 }
 
-function toLocalDatetimeValue(date) {
-  if (!date) return ''
-  const d = new Date(date)
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-  return d.toISOString().slice(0, 16)
-}
-
 // ─── Month View ───────────────────────────────────────────────────────────────
 function MonthView({ currentDate, events }) {
   const year = currentDate.getFullYear()
@@ -69,11 +64,11 @@ function MonthView({ currentDate, events }) {
   const today = new Date()
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-800">
+    <div className="overflow-hidden rounded-xl border border-[#4a1010]/50">
       {/* Day-of-week header */}
-      <div className="grid grid-cols-7 border-b border-gray-800">
+      <div className="grid grid-cols-7 border-b border-[#4a1010]/50 bg-[#1a0a0a]/60">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-          <div key={d} className="py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-800 last:border-r-0">
+          <div key={d} className="py-2 text-center text-xs font-medium text-white/40 uppercase tracking-wider border-r border-[#4a1010]/50 last:border-r-0">
             {d}
           </div>
         ))}
@@ -90,16 +85,16 @@ function MonthView({ currentDate, events }) {
             <div
               key={idx}
               className={cn(
-                'min-h-24 border-b border-r border-gray-800 last:border-r-0 p-1.5',
-                !isCurrentMonth && 'opacity-30',
-                isCurrentMonth && 'hover:bg-gray-900/40 transition-colors',
+                'min-h-24 border-b border-r border-[#4a1010]/50 last:border-r-0 p-1.5 transition-colors duration-200',
+                !isCurrentMonth && 'opacity-25',
+                isCurrentMonth && 'hover:bg-[#F23B3B]/5',
               )}
             >
               <div className={cn(
                 'mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
                 isToday
-                  ? 'bg-[#F23B3B] text-white font-bold'
-                  : 'text-gray-400',
+                  ? 'bg-gradient-to-br from-[#8b1f1f] to-[#F23B3B] text-white font-bold shadow-lg shadow-[#F23B3B]/20'
+                  : 'text-white/40',
               )}>
                 {day.getDate()}
               </div>
@@ -109,14 +104,14 @@ function MonthView({ currentDate, events }) {
                     key={ev.id}
                     className={cn(
                       'truncate rounded px-1.5 py-0.5 text-[11px] font-medium text-white',
-                      COLOR_MAP[ev.color] ?? 'bg-[#F23B3B]',
+                      COLOR_MAP[ev.color] ?? 'bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B]',
                     )}
                   >
                     {ev.title}
                   </div>
                 ))}
                 {dayEvents.length > 3 && (
-                  <div className="text-[10px] text-gray-500 pl-1">+{dayEvents.length - 3} more</div>
+                  <div className="text-[10px] text-white/30 pl-1">+{dayEvents.length - 3} more</div>
                 )}
               </div>
             </div>
@@ -142,20 +137,20 @@ function WeekView({ currentDate, events }) {
   const today = new Date()
 
   return (
-    <div className="overflow-auto rounded-lg border border-gray-800 max-h-[600px]">
+    <div className="overflow-auto rounded-xl border border-[#4a1010]/50 max-h-[600px]">
       {/* Header */}
-      <div className="grid grid-cols-8 border-b border-gray-800 sticky top-0 bg-gray-950 z-10">
-        <div className="border-r border-gray-800 py-2 px-2 text-xs text-gray-600">Time</div>
+      <div className="grid grid-cols-8 border-b border-[#4a1010]/50 sticky top-0 bg-[#0d0000]/95 backdrop-blur-md z-10">
+        <div className="border-r border-[#4a1010]/50 py-2 px-2 text-xs text-white/30">Time</div>
         {weekDays.map(day => (
           <div
             key={day.toISOString()}
             className={cn(
-              'border-r border-gray-800 last:border-r-0 py-2 text-center text-xs',
-              isSameDay(day, today) ? 'text-[#F23B3B] font-semibold' : 'text-gray-400',
+              'border-r border-[#4a1010]/50 last:border-r-0 py-2 text-center text-xs',
+              isSameDay(day, today) ? 'text-[#F23B3B] font-semibold' : 'text-white/50',
             )}
           >
             <div>{day.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-            <div className="text-[10px] text-gray-600">{day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+            <div className="text-[10px] text-white/30">{day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
           </div>
         ))}
       </div>
@@ -166,7 +161,7 @@ function WeekView({ currentDate, events }) {
           <>
             <div
               key={`t-${hour}`}
-              className="border-b border-r border-gray-800 px-2 py-1 text-[10px] text-gray-600"
+              className="border-b border-r border-[#4a1010]/50 px-2 py-1 text-[10px] text-white/30"
             >
               {String(hour).padStart(2, '0')}:00
             </div>
@@ -177,14 +172,14 @@ function WeekView({ currentDate, events }) {
               return (
                 <div
                   key={`${day.toISOString()}-${hour}`}
-                  className="min-h-12 border-b border-r border-gray-800 last:border-r-0 p-0.5 space-y-0.5"
+                  className="min-h-12 border-b border-r border-[#4a1010]/50 last:border-r-0 p-0.5 space-y-0.5 hover:bg-[#F23B3B]/5 transition-colors"
                 >
                   {slot.map(ev => (
                     <div
                       key={ev.id}
                       className={cn(
                         'truncate rounded px-1 py-0.5 text-[10px] font-medium text-white',
-                        COLOR_MAP[ev.color] ?? 'bg-[#F23B3B]',
+                        COLOR_MAP[ev.color] ?? 'bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B]',
                       )}
                     >
                       {ev.title}
@@ -206,12 +201,12 @@ function DayView({ currentDate, events }) {
   const dayEvents = events.filter(e => isSameDay(e.startTime, currentDate))
 
   return (
-    <div className="overflow-auto rounded-lg border border-gray-800 max-h-[600px]">
+    <div className="overflow-auto rounded-xl border border-[#4a1010]/50 max-h-[600px]">
       {hours.map(hour => {
         const slot = dayEvents.filter(e => e.startTime.getHours() === hour)
         return (
-          <div key={hour} className="flex border-b border-gray-800 last:border-b-0">
-            <div className="w-16 shrink-0 border-r border-gray-800 px-2 py-2 text-xs text-gray-600">
+          <div key={hour} className="flex border-b border-[#4a1010]/50 last:border-b-0 hover:bg-[#F23B3B]/5 transition-colors">
+            <div className="w-16 shrink-0 border-r border-[#4a1010]/50 px-2 py-2 text-xs text-white/30">
               {String(hour).padStart(2, '0')}:00
             </div>
             <div className="flex-1 min-h-14 p-1 space-y-1">
@@ -220,7 +215,7 @@ function DayView({ currentDate, events }) {
                   key={ev.id}
                   className={cn(
                     'rounded px-2 py-1 text-sm font-medium text-white',
-                    COLOR_MAP[ev.color] ?? 'bg-[#F23B3B]',
+                    COLOR_MAP[ev.color] ?? 'bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B]',
                   )}
                 >
                   {ev.title}
@@ -267,7 +262,7 @@ export default function Schedule() {
         }))
       )
     } catch (err) {
-      console.error('Failed to fetch blocks', err)
+      toast.error(err?.response?.data?.detail ?? 'Failed to load time blocks')
     } finally {
       setLoading(false)
     }
@@ -285,11 +280,12 @@ export default function Schedule() {
         start_time: new Date(newBlock.start_time).toISOString(),
         end_time:   new Date(newBlock.end_time).toISOString(),
       })
+      toast.success(`Time block "${newBlock.name}" created`)
       setIsDialogOpen(false)
       setNewBlock({ name: '', start_time: '', end_time: '' })
       await fetchBlocks()
     } catch (err) {
-      console.error('Failed to create block', err)
+      toast.error(err?.response?.data?.detail ?? 'Failed to create time block')
     } finally {
       setFormLoading(false)
     }
@@ -299,10 +295,12 @@ export default function Schedule() {
   async function handleAutoFill(blockId) {
     setLoadingBlockId(blockId)
     try {
-      await api.post('/assign-tasks', { block_id: blockId })
+      const res = await api.post('/assign-tasks', { block_id: blockId })
+      const count = res.data?.assigned_task_ids?.length ?? 0
+      toast.success(count > 0 ? `Auto-assigned ${count} task${count !== 1 ? 's' : ''} to block` : 'No tasks could be assigned to this block')
       await fetchBlocks()
     } catch (err) {
-      console.error('Auto-fill failed', err)
+      toast.error(err?.response?.data?.detail ?? 'Auto-fill failed')
     } finally {
       setLoadingBlockId(null)
     }
@@ -343,33 +341,44 @@ export default function Schedule() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Schedule</h1>
-          <p className="text-gray-400 text-sm">Manage time blocks · let the Knapsack algorithm fill them</p>
+          <p className="text-white/50 text-sm">Manage time blocks · let the Knapsack algorithm fill them</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
+        <DotFlowButton onClick={() => setIsDialogOpen(true)} dotVariant="build">
           New Time Block
-        </Button>
+        </DotFlowButton>
       </div>
 
       {/* ── Calendar ── */}
-      <Card className="p-4 bg-gray-950/50 border-gray-800">
+      <Card className="p-4 bg-gradient-to-br from-[#1a0a0a]/75 to-black/75 border-[#4a1010]/50 backdrop-blur-md">
         {/* Calendar toolbar */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => navigate('prev')} className="h-8 w-8 border-gray-700 bg-transparent hover:bg-gray-800">
+            <Button
+              variant="outline" size="icon"
+              onClick={() => navigate('prev')}
+              className="h-8 w-8 border-[#4a1010]/60 bg-transparent hover:bg-[#F23B3B]/10 hover:border-[#F23B3B]/40 text-white/70 hover:text-white transition-all duration-200"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())} className="border-gray-700 bg-transparent hover:bg-gray-800 text-gray-300">
+            <Button
+              variant="outline" size="sm"
+              onClick={() => setCurrentDate(new Date())}
+              className="border-[#4a1010]/60 bg-transparent hover:bg-[#F23B3B]/10 hover:border-[#F23B3B]/40 text-white/70 hover:text-white transition-all duration-200"
+            >
               Today
             </Button>
-            <Button variant="outline" size="icon" onClick={() => navigate('next')} className="h-8 w-8 border-gray-700 bg-transparent hover:bg-gray-800">
+            <Button
+              variant="outline" size="icon"
+              onClick={() => navigate('next')}
+              className="h-8 w-8 border-[#4a1010]/60 bg-transparent hover:bg-[#F23B3B]/10 hover:border-[#F23B3B]/40 text-white/70 hover:text-white transition-all duration-200"
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <span className="text-sm font-semibold text-white ml-1">{calendarLabel()}</span>
           </div>
 
           {/* View switcher */}
-          <div className="flex items-center gap-1 rounded-lg border border-gray-700 bg-gray-900 p-1">
+          <div className="flex items-center gap-1 rounded-lg border border-[#4a1010]/50 bg-black/40 p-1">
             {[
               { key: 'month', icon: Calendar,  label: 'Month' },
               { key: 'week',  icon: Grid3x3,   label: 'Week'  },
@@ -379,10 +388,10 @@ export default function Schedule() {
                 key={key}
                 onClick={() => setView(key)}
                 className={cn(
-                  'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                  'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-200',
                   view === key
-                    ? 'bg-[#F23B3B] text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800',
+                    ? 'bg-[#F23B3B]/20 text-[#F23B3B] shadow-sm'
+                    : 'text-white/40 hover:text-white hover:bg-[#F23B3B]/10',
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -410,7 +419,7 @@ export default function Schedule() {
       <div className="space-y-3">
         <div>
           <h2 className="text-lg font-semibold text-white">Blocks Directory</h2>
-          <p className="text-sm text-gray-500">Tasks auto-assigned by the Knapsack algorithm</p>
+          <p className="text-sm text-white/40">Tasks auto-assigned by the Knapsack algorithm</p>
         </div>
 
         {loading ? (
@@ -418,7 +427,7 @@ export default function Schedule() {
             <Loader2 className="h-8 w-8 animate-spin text-[#F23B3B]" />
           </div>
         ) : sortedBlocks.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-800 py-16 text-center text-gray-500">
+          <div className="rounded-xl border border-dashed border-[#4a1010]/50 py-16 text-center text-white/30">
             No time blocks yet. Create one using the button above.
           </div>
         ) : (
@@ -426,27 +435,24 @@ export default function Schedule() {
             {sortedBlocks.map(block => (
               <div
                 key={block.block_id}
-                className="rounded-xl border border-gray-800 bg-gray-900/50 p-4 space-y-3"
+                className="rounded-xl border border-[#4a1010]/50 bg-gradient-to-br from-[#1a0a0a]/80 to-black/80 backdrop-blur-sm p-4 space-y-3 hover:border-[#F23B3B]/25 transition-all duration-300"
               >
                 {/* Block header */}
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-semibold text-white">{block.name}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-white/50 mt-0.5">
                       {formatBlockTime(block.start_time)} → {formatBlockTime(block.end_time)}
-                      <span className="ml-1.5 text-gray-600">· {blockDuration(block)} min</span>
+                      <span className="ml-1.5 text-white/30">· {blockDuration(block)} min</span>
                     </p>
                   </div>
-                  <button
+                  <DotFlowButton
                     onClick={() => handleAutoFill(block.block_id)}
-                    disabled={loadingBlockId === block.block_id}
-                    className="flex shrink-0 items-center gap-2 rounded-lg bg-[#F23B3B] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#c42e2e] disabled:opacity-50 disabled:cursor-not-allowed"
+                    loading={loadingBlockId === block.block_id}
+                    dotVariant="spark"
                   >
-                    {loadingBlockId === block.block_id
-                      ? <Loader2 className="h-4 w-4 animate-spin" />
-                      : <Sparkles className="h-4 w-4" />}
                     Auto-Fill Block
-                  </button>
+                  </DotFlowButton>
                 </div>
 
                 {/* Tasks */}
@@ -455,16 +461,16 @@ export default function Schedule() {
                     {block.task.map(task => (
                       <div
                         key={task.task_id}
-                        className="flex items-center gap-2 rounded-lg bg-black/30 px-3 py-2 text-sm text-gray-300"
+                        className="flex items-center gap-2 rounded-lg bg-white/5 border border-[#4a1010]/30 px-3 py-2 text-sm text-white/80 hover:border-[#F23B3B]/20 transition-colors duration-200"
                       >
                         {task.completed
                           ? <CheckCircle2 className="h-4 w-4 shrink-0 text-green-400" />
-                          : <Circle className="h-4 w-4 shrink-0 text-gray-600" />}
-                        <span className={task.completed ? 'line-through text-gray-500' : ''}>
+                          : <Circle className="h-4 w-4 shrink-0 text-white/30" />}
+                        <span className={task.completed ? 'line-through text-white/30' : ''}>
                           {task.title}
                         </span>
                         {task.est_duration && (
-                          <span className="ml-auto text-xs text-gray-500">{task.est_duration} min</span>
+                          <span className="ml-auto text-xs text-white/40">{task.est_duration} min</span>
                         )}
                         {task.priority_level && (
                           <span className="text-xs font-bold text-[#F23B3B]">P{task.priority_level}</span>
@@ -473,7 +479,7 @@ export default function Schedule() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm italic text-gray-600">
+                  <p className="text-sm italic text-white/30">
                     No tasks assigned yet — click <span className="text-[#F23B3B] not-italic font-medium">Auto-Fill Block</span> to run the algorithm.
                   </p>
                 )}
@@ -485,45 +491,48 @@ export default function Schedule() {
 
       {/* ── New Time Block Dialog ── */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-gradient-to-br from-[#1a0a0a]/95 to-black/95 border-[#4a1010]/50 backdrop-blur-xl text-white">
           <DialogHeader>
-            <DialogTitle>New Time Block</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">New Time Block</DialogTitle>
+            <DialogDescription className="text-white/50">
               Define a block of time. The Knapsack algorithm will fill it with your tasks.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateBlock} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="block-name">Block Name</Label>
+              <Label htmlFor="block-name" className="text-white/60 text-xs">Block Name</Label>
               <Input
                 id="block-name"
                 placeholder="e.g. Morning Focus, Study Session…"
                 value={newBlock.name}
                 onChange={e => setNewBlock(p => ({ ...p, name: e.target.value }))}
                 required
+                className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="block-start">Start Time</Label>
+                <Label htmlFor="block-start" className="text-white/60 text-xs">Start Time</Label>
                 <Input
                   id="block-start"
                   type="datetime-local"
                   value={newBlock.start_time}
                   onChange={e => setNewBlock(p => ({ ...p, start_time: e.target.value }))}
                   required
+                  className="bg-white/5 border-[#4a1010] text-white focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="block-end">End Time</Label>
+                <Label htmlFor="block-end" className="text-white/60 text-xs">End Time</Label>
                 <Input
                   id="block-end"
                   type="datetime-local"
                   value={newBlock.end_time}
                   onChange={e => setNewBlock(p => ({ ...p, end_time: e.target.value }))}
                   required
+                  className="bg-white/5 border-[#4a1010] text-white focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
                 />
               </div>
             </div>
@@ -533,11 +542,15 @@ export default function Schedule() {
                 type="button"
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
-                className="border-gray-700 bg-transparent hover:bg-gray-800"
+                className="border-[#4a1010]/60 bg-transparent hover:bg-[#F23B3B]/10 hover:border-[#F23B3B]/40 text-white/70 hover:text-white transition-all duration-200"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={formLoading} className="gap-2">
+              <Button
+                type="submit"
+                disabled={formLoading}
+                className="gap-2 bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] text-white border-0 transition-all duration-300"
+              >
                 {formLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                 Create Block
               </Button>

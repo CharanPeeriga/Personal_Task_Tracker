@@ -75,6 +75,26 @@
   100% { transform: translate(var(--dx), var(--dy)) scale(0) rotate(var(--rot)); opacity: 0; }
 }
 
+/* ─── Toast overrides ────────────────────────────────────────────────────── */
+:root {
+  --toastify-color-dark: oklch(0.08 0 0);
+  --toastify-text-color-dark: #fff;
+  --toastify-color-progress-dark: #F23B3B;
+}
+
+.Toastify__toast {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.75rem !important;
+  backdrop-filter: blur(12px);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 0.875rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+.Toastify__toast--success .Toastify__toast-icon svg { fill: #F23B3B; }
+.Toastify__progress-bar--success { background: #F23B3B !important; }
+.Toastify__progress-bar--error   { background: #ef4444 !important; }
+
 /* ─── Base resets ─────────────────────────────────────────────────────────── */
 *,
 *::before,

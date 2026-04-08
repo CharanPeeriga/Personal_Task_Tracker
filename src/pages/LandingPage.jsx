@@ -11,7 +11,7 @@ export default function LandingPage() {
       <GrainGradientBackground />
 
       {/* ── Header ── */}
-      <header className="relative z-10 flex items-center justify-between px-6 sm:px-10 py-5 border-b border-white/10">
+      <header className="relative z-10 flex items-center justify-between px-6 sm:px-10 py-5 border-b border-[#F23B3B]/15 bg-black/20 backdrop-blur-sm">
         <span className="text-lg font-bold tracking-tight text-white">
           Task Tracker
         </span>
@@ -25,7 +25,7 @@ export default function LandingPage() {
           </Button>
           <Button
             asChild
-            className="bg-[#F23B3B] hover:bg-[#c42e2e] text-white gap-1.5"
+            className="bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] text-white border-0 gap-1.5 transition-all duration-300"
           >
             <Link to="/register">
               Get Started
@@ -64,7 +64,7 @@ export default function LandingPage() {
             <Button
               asChild
               size="lg"
-              className="h-12 px-8 text-base bg-[#F23B3B] hover:bg-[#c42e2e] text-white gap-2"
+              className="h-12 px-8 text-base bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] text-white border-0 gap-2 transition-all duration-300 shadow-lg shadow-[#F23B3B]/20 hover:-translate-y-0.5"
             >
               <Link to="/register">
                 Get Started <ArrowRight className="h-4 w-4" />
@@ -74,7 +74,7 @@ export default function LandingPage() {
               asChild
               variant="outline"
               size="lg"
-              className="h-12 px-8 text-base border-white/20 text-white bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:text-white"
+              className="h-12 px-8 text-base border-[#4a1010]/60 text-white/80 bg-white/5 backdrop-blur-sm hover:bg-[#F23B3B]/10 hover:border-[#F23B3B]/40 hover:text-white transition-all duration-200"
             >
               <Link to="/login">Sign in</Link>
             </Button>

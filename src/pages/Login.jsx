@@ -56,7 +56,7 @@ export default function Login() {
 
         {/* Card */}
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl p-8 flex flex-col gap-5">
-          <ShineBorder shineColor="#f97316" duration={10} borderWidth={1} />
+          <ShineBorder shineColor="#F23B3B" duration={10} borderWidth={1} />
 
           <h2 className="relative z-10 text-xl font-semibold text-white">Welcome back</h2>
 
@@ -120,7 +120,7 @@ export default function Login() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 text-base font-medium rounded-lg bg-[#F23B3B] hover:bg-[#c42e2e] text-white"
+              className="w-full h-12 text-base font-medium rounded-lg bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] text-white border-0 transition-all duration-300 shadow-lg shadow-[#F23B3B]/20"
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>

@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { toast } from 'react-toastify'
 import confetti from 'canvas-confetti'
 import api from '@/api/axiosInstance'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RippleButton } from '@/components/ui/ripple-button'
+import { DotFlowButton } from '@/components/ui/dot-flow-button'
 import TetrisLoading from '@/components/ui/tetris-loader'
 import {
   ChevronDown, ChevronRight, Plus, X, ExternalLink,
@@ -136,9 +138,12 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
         priority_level: form.priority_level ? parseInt(form.priority_level) : undefined,
         due_date:       form.due_date       ? new Date(form.due_date).toISOString() : undefined,
       })
+      toast.success(`Task "${form.title}" created`)
       onSuccess()
     } catch (err) {
-      setError(err?.response?.data?.detail ?? 'Failed to create task.')
+      const msg = err?.response?.data?.detail ?? 'Failed to create task.'
+      setError(msg)
+      toast.error(msg)
       setSaving(false)
     }
   }
@@ -148,8 +153,8 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="w-full max-w-md bg-gray-950/90 backdrop-blur-md border border-[#F23B3B]/20 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#F23B3B]/15">
+      <div className="w-full max-w-md bg-gradient-to-br from-[#1a0a0a]/95 to-black/95 backdrop-blur-xl border border-[#4a1010]/50 rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#4a1010]/40">
           <h2 className="text-base font-semibold text-white">Create Task</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors">
             <X className="h-4 w-4" />
@@ -165,7 +170,7 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
               value={form.title}
               onChange={(e) => set('title', e.target.value)}
               placeholder="e.g. Write unit tests"
-              className="bg-black/60 border-gray-800 text-white placeholder:text-gray-600 focus-visible:ring-[#F23B3B]"
+              className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
             />
           </div>
 
@@ -179,7 +184,7 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
                 value={form.est_duration}
                 onChange={(e) => set('est_duration', e.target.value)}
                 placeholder="60"
-                className="bg-black/60 border-gray-800 text-white placeholder:text-gray-600 focus-visible:ring-[#F23B3B]"
+                className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -188,7 +193,7 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
                 id="task-priority"
                 value={form.priority_level}
                 onChange={(e) => set('priority_level', e.target.value)}
-                className="w-full bg-black/60 border border-gray-800 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F23B3B] focus:outline-none"
+                className="w-full bg-white/5 border border-[#4a1010] text-white rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#F23B3B] focus:border-[#F23B3B] focus:outline-none transition-colors"
               >
                 {[1, 2, 3, 4, 5].map((p) => (
                   <option key={p} value={p}>
@@ -206,7 +211,7 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
               type="date"
               value={form.due_date}
               onChange={(e) => set('due_date', e.target.value)}
-              className="bg-black/60 border-gray-800 text-white placeholder:text-gray-600 focus-visible:ring-[#F23B3B]"
+              className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
             />
           </div>
 
@@ -217,7 +222,7 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
               required
               value={form.project_id}
               onChange={(e) => set('project_id', e.target.value)}
-              className="w-full bg-black/60 border border-gray-800 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F23B3B] focus:outline-none"
+              className="w-full bg-white/5 border border-[#4a1010] text-white rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#F23B3B] focus:border-[#F23B3B] focus:outline-none transition-colors"
             >
               <option value="">Select a project…</option>
               {directory.map((p) => (
@@ -237,8 +242,8 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
             <RippleButton type="button" onClick={onClose} className="text-gray-500 hover:text-white border-gray-800/60 bg-transparent">
               Cancel
             </RippleButton>
-            <RippleButton type="submit" disabled={saving} rippleColor="#F23B3B"
-              className="bg-[#F23B3B]/25 hover:bg-[#F23B3B]/35 border-[#F23B3B]/35 text-white">
+            <RippleButton type="submit" disabled={saving} rippleColor="#f87878"
+              className="bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] border-0 text-white transition-all duration-300">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {saving ? 'Creating…' : 'Create Task'}
             </RippleButton>
@@ -268,9 +273,12 @@ function CreateProjectModal({ onClose, onSuccess }) {
         priority_level: form.priority_level ? parseInt(form.priority_level) : undefined,
         due_date:       form.due_date        ? new Date(form.due_date).toISOString() : undefined,
       })
+      toast.success(`Project "${form.title}" created`)
       onSuccess()
     } catch (err) {
-      setError(err?.response?.data?.detail ?? 'Failed to create project.')
+      const msg = err?.response?.data?.detail ?? 'Failed to create project.'
+      setError(msg)
+      toast.error(msg)
       setSaving(false)
     }
   }
@@ -280,8 +288,8 @@ function CreateProjectModal({ onClose, onSuccess }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="w-full max-w-sm bg-gray-950/90 backdrop-blur-md border border-[#F23B3B]/20 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#F23B3B]/15">
+      <div className="w-full max-w-sm bg-gradient-to-br from-[#1a0a0a]/95 to-black/95 backdrop-blur-xl border border-[#4a1010]/50 rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#4a1010]/40">
           <h2 className="text-base font-semibold text-white">Create Project</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors">
             <X className="h-4 w-4" />
@@ -297,7 +305,7 @@ function CreateProjectModal({ onClose, onSuccess }) {
               value={form.title}
               onChange={(e) => set('title', e.target.value)}
               placeholder="e.g. Database Systems Project"
-              className="bg-black/60 border-gray-800 text-white placeholder:text-gray-600 focus-visible:ring-[#F23B3B]"
+              className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
             />
           </div>
 
@@ -307,7 +315,7 @@ function CreateProjectModal({ onClose, onSuccess }) {
               id="proj-priority"
               value={form.priority_level}
               onChange={(e) => set('priority_level', e.target.value)}
-              className="w-full bg-black/60 border border-gray-800 text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#F23B3B] focus:outline-none"
+              className="w-full bg-white/5 border border-[#4a1010] text-white rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#F23B3B] focus:border-[#F23B3B] focus:outline-none transition-colors"
             >
               {[1, 2, 3, 4, 5].map((p) => (
                 <option key={p} value={p}>
@@ -324,7 +332,7 @@ function CreateProjectModal({ onClose, onSuccess }) {
               type="date"
               value={form.due_date}
               onChange={(e) => set('due_date', e.target.value)}
-              className="bg-black/60 border-gray-800 text-white placeholder:text-gray-600 focus-visible:ring-[#F23B3B]"
+              className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
             />
           </div>
 
@@ -339,8 +347,8 @@ function CreateProjectModal({ onClose, onSuccess }) {
             <RippleButton type="button" onClick={onClose} className="text-gray-500 hover:text-white border-gray-800/60 bg-transparent">
               Cancel
             </RippleButton>
-            <RippleButton type="submit" disabled={saving} rippleColor="#F23B3B"
-              className="bg-[#F23B3B]/25 hover:bg-[#F23B3B]/35 border-[#F23B3B]/35 text-white">
+            <RippleButton type="submit" disabled={saving} rippleColor="#f87878"
+              className="bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] border-0 text-white transition-all duration-300">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FolderPlus className="h-4 w-4" />}
               {saving ? 'Creating…' : 'Create Project'}
             </RippleButton>
@@ -359,7 +367,7 @@ function ConfirmDeleteModal({ title, message, onConfirm, onCancel }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
     >
-      <div className="w-full max-w-sm bg-gray-950/90 backdrop-blur-md border border-red-900/40 rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+      <div className="w-full max-w-sm bg-gradient-to-br from-[#1a0a0a]/95 to-black/95 backdrop-blur-xl border border-red-900/30 rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
         <div className="flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
           <div>
@@ -400,8 +408,8 @@ function TaskRow({ task, onDelete, onToggleComplete }) {
     <div className={cn(
       'group flex flex-col gap-2 p-4 rounded-xl border transition-colors backdrop-blur-sm',
       done
-        ? 'border-gray-900/60 bg-black/25 opacity-50'
-        : 'border-gray-900/60 bg-black/30 hover:border-[#F23B3B]/25 hover:bg-black/40'
+        ? 'border-[#4a1010]/40 bg-[#0d0000]/75 opacity-50'
+        : 'border-[#4a1010]/40 bg-[#0d0000]/75 hover:border-[#F23B3B]/25 hover:bg-[#0d0000]/85'
     )}>
       <div className="flex items-start gap-3">
         <button
@@ -729,10 +737,10 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
 
   return (
     <>
-      <div className="border border-gray-900/60 rounded-xl overflow-hidden hover:border-[#F23B3B]/20 transition-colors backdrop-blur-sm bg-black/20">
+      <div className="border border-[#4a1010]/50 rounded-xl overflow-hidden hover:border-[#F23B3B]/20 transition-colors backdrop-blur-sm bg-[#0d0000]/75">
         <button
           onClick={onToggle}
-          className="w-full flex items-center gap-3 px-5 py-4 bg-black/30 hover:bg-[#F23B3B]/8 transition-colors text-left group"
+          className="w-full flex items-center gap-3 px-5 py-4 bg-[#0d0000]/75 hover:bg-[#F23B3B]/8 transition-colors text-left group"
         >
           {expanded
             ? <ChevronDown  className="h-4 w-4 text-gray-600 shrink-0" />
@@ -743,9 +751,9 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
             {project.priority_level && <PriorityBadge level={project.priority_level} />}
             <span className="text-xs text-gray-600">{done}/{tasks.length} done</span>
             {tasks.length > 0 && (
-              <div className="w-16 h-1 rounded-full bg-gray-900/60 overflow-hidden">
+              <div className="w-16 h-1 rounded-full bg-white/5 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-[#F23B3B]/70 transition-all"
+                  className="h-full rounded-full bg-gradient-to-r from-[#4a1010] via-[#F23B3B] to-[#f87878] transition-all duration-500"
                   style={{ width: `${(done / tasks.length) * 100}%` }}
                 />
               </div>
@@ -761,7 +769,7 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
         </button>
 
         {expanded && (
-          <div className="divide-y divide-gray-900/40 bg-black/20">
+          <div className="divide-y divide-[#4a1010]/30 bg-[#0d0000]/75">
             {tasks.length === 0 && (
               <p className="px-10 py-4 text-sm text-gray-700 text-center">No tasks in this project.</p>
             )}
@@ -877,9 +885,9 @@ export default function Dashboard() {
       const payload = completed
         ? { completed: true }
         : { completed: false, completed_at: null }
-      await api.put(`/tasks/${taskId}`, payload)
+      await api.patch(`/tasks/${taskId}`, payload)
     } catch {
-      // Roll back on failure
+      toast.error('Failed to update task — changes rolled back')
       await fetchDirectory()
     }
   }
@@ -921,33 +929,29 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
           {!loading && !error && (
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-white/50 mt-1">
               {doneTasks}/{allTasks.length} tasks completed across {directory.length} project{directory.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <RippleButton
+          <DotFlowButton
             onClick={() => setShowProjectModal(true)}
-            rippleColor="#F23B3B"
-            className="bg-black/40 border-gray-800/60 text-gray-300 hover:text-white hover:border-[#F23B3B]/35"
+            dotVariant="pulse"
           >
-            <FolderPlus className="h-4 w-4" />
             New Project
-          </RippleButton>
-          <RippleButton
+          </DotFlowButton>
+          <DotFlowButton
             onClick={() => setShowTaskModal(true)}
-            rippleColor="#F23B3B"
-            className="bg-[#F23B3B]/20 border-[#F23B3B]/35 text-white hover:bg-[#F23B3B]/35"
+            dotVariant="flow"
           >
-            <Plus className="h-4 w-4" />
             Create Task
-          </RippleButton>
+          </DotFlowButton>
         </div>
       </div>
 
       {/* ── View tabs ── */}
-      <div className="inline-flex self-start bg-black/40 backdrop-blur-sm border border-gray-900/60 rounded-lg p-1 gap-0.5">
+      <div className="inline-flex self-start bg-[#0d0000]/75 backdrop-blur-sm border border-[#4a1010]/50 rounded-lg p-1 gap-0.5">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -955,8 +959,8 @@ export default function Dashboard() {
             className={cn(
               'flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
               activeView === id
-                ? 'bg-[#F23B3B]/20 text-white'
-                : 'text-gray-600 hover:text-white'
+                ? 'bg-[#F23B3B]/20 text-[#F23B3B]'
+                : 'text-white/40 hover:text-white'
             )}
           >
             <Icon className="h-3.5 w-3.5" />
