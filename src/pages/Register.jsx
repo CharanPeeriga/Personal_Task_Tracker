@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { GrainGradientBackground } from '@/components/ui/grain-gradient'
+import { StarsBackground } from '@/components/ui/stars-background'
 import { ShineBorder } from '@/components/ui/shine-border'
 import { ArrowLeft } from 'lucide-react'
 
@@ -35,13 +35,15 @@ export default function Register() {
     }
   }
 
-  const inputCls = "w-full bg-white/5 border border-[#4a1010] text-white rounded-lg px-4 py-2.5 text-sm placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#F23B3B] focus:border-[#F23B3B] transition-colors"
+  const inputCls = "w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-white/30 focus:border-white/20 transition-colors"
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-black px-4 overflow-hidden">
 
-      {/* Background */}
-      <GrainGradientBackground />
+      {/* Stars background at 50% opacity */}
+      <div className="absolute inset-0 opacity-50">
+        <StarsBackground className="absolute inset-0" />
+      </div>
 
       <div className="relative z-10 w-full max-w-md flex flex-col gap-6">
 
@@ -62,7 +64,7 @@ export default function Register() {
 
         {/* Card */}
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl p-8">
-          <ShineBorder shineColor="#F23B3B" duration={10} borderWidth={1} />
+          <ShineBorder shineColor="rgba(255,255,255,0.3)" duration={10} borderWidth={1} />
 
           <h2 className="relative z-10 text-xl font-semibold text-white mb-6">Get started</h2>
 
@@ -106,7 +108,7 @@ export default function Register() {
             </div>
 
             {error && (
-              <div className="bg-[#F23B3B]/10 border border-red-500/30 text-[#F23B3B] text-sm rounded-lg px-4 py-3">
+              <div className="bg-red-950/30 border border-red-900/40 text-red-400 text-sm rounded-lg px-4 py-3">
                 {error}
               </div>
             )}
@@ -119,8 +121,9 @@ export default function Register() {
 
             <Button
               type="submit"
+              variant="solid"
               disabled={loading}
-              className="w-full h-11 bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] disabled:opacity-50 text-white font-medium rounded-lg text-sm border-0 transition-all duration-300 shadow-lg shadow-[#F23B3B]/20"
+              className="w-full h-11 font-medium rounded-lg text-sm"
             >
               {loading ? 'Creating account…' : 'Create account'}
             </Button>
@@ -129,7 +132,7 @@ export default function Register() {
 
         <p className="text-center text-white/40 text-sm">
           Already have an account?{' '}
-          <Link to="/login" className="text-[#F23B3B] hover:text-[#f87878] transition">
+          <Link to="/login" className="text-white/70 hover:text-white transition">
             Sign in
           </Link>
         </p>

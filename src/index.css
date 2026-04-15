@@ -86,7 +86,7 @@
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 0.75rem !important;
   backdrop-filter: blur(12px);
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 0.875rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 }
@@ -104,11 +104,22 @@
 
 body {
   margin: 0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--background);
   color: var(--foreground);
+}
+
+/* Force Inter on everything except elements that explicitly opt out */
+* {
+  font-family: inherit;
+}
+
+/* ─── Select dropdown options ────────────────────────────────────────────── */
+select option {
+  background-color: #0a0a0a;
+  color: #ffffff;
 }
 
 #root {

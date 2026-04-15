@@ -4,13 +4,13 @@ import confetti from 'canvas-confetti'
 import api from '@/api/axiosInstance'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { RippleButton } from '@/components/ui/ripple-button'
-import { DotFlowButton } from '@/components/ui/dot-flow-button'
+import { Button } from '@/components/ui/button'
 import TetrisLoading from '@/components/ui/tetris-loader'
 import {
   ChevronDown, ChevronRight, Plus, X, ExternalLink,
   CheckCircle2, Circle, Clock, Layers, List,
   AlertCircle, Loader2, Trash2, AlertTriangle, LayoutGrid, FolderPlus,
+  CheckCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -27,14 +27,13 @@ function fireConfetti(clientX, clientY) {
     decay: 0.92,
     scalar: 0.9,
     origin: { x, y },
-    colors: ['#F23B3B', '#f87878', '#f59e0b', '#10b981', '#3b82f6', '#f97316', '#fec4c4'],
+    colors: ['#ffffff', '#a3a3a3', '#f59e0b', '#10b981', '#3b82f6', '#f97316'],
     ticks: 180,
     gravity: 1.1,
     drift: 0,
     shapes: ['square', 'circle'],
   })
 
-  // Second smaller burst for depth
   setTimeout(() => {
     confetti({
       particleCount: 30,
@@ -43,7 +42,7 @@ function fireConfetti(clientX, clientY) {
       decay: 0.9,
       scalar: 0.6,
       origin: { x, y },
-      colors: ['#ffffff', '#F23B3B', '#f87878'],
+      colors: ['#ffffff', '#d4d4d4'],
       ticks: 120,
       gravity: 0.8,
     })
@@ -63,12 +62,16 @@ function flattenTasks(directory) {
 }
 
 const PRIORITY_STYLES = {
-  1: { label: 'P1', class: 'text-gray-400  bg-gray-900/80' },
+  1: { label: 'P1', class: 'text-gray-400  bg-gray-800/80' },
   2: { label: 'P2', class: 'text-blue-400  bg-blue-950/60' },
   3: { label: 'P3', class: 'text-yellow-400 bg-yellow-950/60' },
   4: { label: 'P4', class: 'text-orange-400 bg-orange-950/60' },
   5: { label: 'P5', class: 'text-red-400   bg-red-950/60' },
 }
+
+// ─── Shared select className ───────────────────────────────────────────────────
+const SELECT_CLS =
+  'w-full bg-black border border-gray-800 text-white rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-white/30 focus:border-white/30 focus:outline-none transition-colors [&>option]:bg-black [&>option]:text-white'
 
 // ─── Micro-components ─────────────────────────────────────────────────────────
 
@@ -99,7 +102,7 @@ function ResourceLink({ resource }) {
       href={resource.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-xs text-[#F23B3B] hover:text-[#f87878] transition-colors"
+      className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
     >
       <ExternalLink className="h-3 w-3" />
       {resource.title || resource.platform || 'Link'}
@@ -128,12 +131,11 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (!form.project_id) { setError('Please select a project.'); return }
     setSaving(true)
     try {
       await api.post('/tasks', {
         title:          form.title,
-        project_id:     parseInt(form.project_id),
+        project_id:     form.project_id ? parseInt(form.project_id) : undefined,
         est_duration:   form.est_duration   ? parseInt(form.est_duration)   : undefined,
         priority_level: form.priority_level ? parseInt(form.priority_level) : undefined,
         due_date:       form.due_date       ? new Date(form.due_date).toISOString() : undefined,
@@ -153,8 +155,8 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="w-full max-w-md bg-gradient-to-br from-[#1a0a0a]/95 to-black/95 backdrop-blur-xl border border-[#4a1010]/50 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#4a1010]/40">
+      <div className="w-full max-w-md bg-gray-950/95 backdrop-blur-xl border border-gray-800/60 rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-800/50">
           <h2 className="text-base font-semibold text-white">Create Task</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors">
             <X className="h-4 w-4" />
@@ -170,7 +172,7 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
               value={form.title}
               onChange={(e) => set('title', e.target.value)}
               placeholder="e.g. Write unit tests"
-              className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
+              className="bg-black border-gray-800 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:border-white/30"
             />
           </div>
 
@@ -184,7 +186,7 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
                 value={form.est_duration}
                 onChange={(e) => set('est_duration', e.target.value)}
                 placeholder="60"
-                className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
+                className="bg-black border-gray-800 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:border-white/30"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -193,10 +195,11 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
                 id="task-priority"
                 value={form.priority_level}
                 onChange={(e) => set('priority_level', e.target.value)}
-                className="w-full bg-white/5 border border-[#4a1010] text-white rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#F23B3B] focus:border-[#F23B3B] focus:outline-none transition-colors"
+                className={SELECT_CLS}
+                style={{ backgroundColor: '#000', color: '#fff' }}
               >
                 {[1, 2, 3, 4, 5].map((p) => (
-                  <option key={p} value={p}>
+                  <option key={p} value={p} style={{ backgroundColor: '#000', color: '#fff' }}>
                     {p} — {['Lowest', 'Low', 'Medium', 'High', 'Critical'][p - 1]}
                   </option>
                 ))}
@@ -211,22 +214,22 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
               type="date"
               value={form.due_date}
               onChange={(e) => set('due_date', e.target.value)}
-              className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
+              className="bg-black border-gray-800 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:border-white/30"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="task-project" className="text-gray-400 text-xs">Project *</Label>
+            <Label htmlFor="task-project" className="text-gray-400 text-xs">Project (optional)</Label>
             <select
               id="task-project"
-              required
               value={form.project_id}
               onChange={(e) => set('project_id', e.target.value)}
-              className="w-full bg-white/5 border border-[#4a1010] text-white rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#F23B3B] focus:border-[#F23B3B] focus:outline-none transition-colors"
+              className={SELECT_CLS}
+              style={{ backgroundColor: '#000', color: '#fff' }}
             >
-              <option value="">Select a project…</option>
+              <option value="" style={{ backgroundColor: '#000', color: '#fff' }}>— No Project —</option>
               {directory.map((p) => (
-                <option key={p.project_id} value={p.project_id}>{p.title}</option>
+                <option key={p.project_id} value={p.project_id} style={{ backgroundColor: '#000', color: '#fff' }}>{p.title}</option>
               ))}
             </select>
           </div>
@@ -239,14 +242,13 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
           )}
 
           <div className="flex justify-end gap-3 pt-1">
-            <RippleButton type="button" onClick={onClose} className="text-gray-500 hover:text-white border-gray-800/60 bg-transparent">
+            <Button type="button" onClick={onClose} variant="ghost" neon={false} size="sm">
               Cancel
-            </RippleButton>
-            <RippleButton type="submit" disabled={saving} rippleColor="#f87878"
-              className="bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] border-0 text-white transition-all duration-300">
+            </Button>
+            <Button type="submit" disabled={saving} variant="solid" size="sm">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {saving ? 'Creating…' : 'Create Task'}
-            </RippleButton>
+            </Button>
           </div>
         </form>
       </div>
@@ -288,8 +290,8 @@ function CreateProjectModal({ onClose, onSuccess }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="w-full max-w-sm bg-gradient-to-br from-[#1a0a0a]/95 to-black/95 backdrop-blur-xl border border-[#4a1010]/50 rounded-2xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#4a1010]/40">
+      <div className="w-full max-w-sm bg-gray-950/95 backdrop-blur-xl border border-gray-800/60 rounded-2xl shadow-2xl">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-800/50">
           <h2 className="text-base font-semibold text-white">Create Project</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors">
             <X className="h-4 w-4" />
@@ -305,7 +307,7 @@ function CreateProjectModal({ onClose, onSuccess }) {
               value={form.title}
               onChange={(e) => set('title', e.target.value)}
               placeholder="e.g. Database Systems Project"
-              className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
+              className="bg-black border-gray-800 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:border-white/30"
             />
           </div>
 
@@ -315,10 +317,11 @@ function CreateProjectModal({ onClose, onSuccess }) {
               id="proj-priority"
               value={form.priority_level}
               onChange={(e) => set('priority_level', e.target.value)}
-              className="w-full bg-white/5 border border-[#4a1010] text-white rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#F23B3B] focus:border-[#F23B3B] focus:outline-none transition-colors"
+              className={SELECT_CLS}
+              style={{ backgroundColor: '#000', color: '#fff' }}
             >
               {[1, 2, 3, 4, 5].map((p) => (
-                <option key={p} value={p}>
+                <option key={p} value={p} style={{ backgroundColor: '#000', color: '#fff' }}>
                   {p} — {['Lowest', 'Low', 'Medium', 'High', 'Critical'][p - 1]}
                 </option>
               ))}
@@ -332,7 +335,7 @@ function CreateProjectModal({ onClose, onSuccess }) {
               type="date"
               value={form.due_date}
               onChange={(e) => set('due_date', e.target.value)}
-              className="bg-white/5 border-[#4a1010] text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-[#F23B3B] focus-visible:border-[#F23B3B]"
+              className="bg-black border-gray-800 text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:border-white/30"
             />
           </div>
 
@@ -344,14 +347,13 @@ function CreateProjectModal({ onClose, onSuccess }) {
           )}
 
           <div className="flex justify-end gap-3 pt-1">
-            <RippleButton type="button" onClick={onClose} className="text-gray-500 hover:text-white border-gray-800/60 bg-transparent">
+            <Button type="button" onClick={onClose} variant="ghost" neon={false} size="sm">
               Cancel
-            </RippleButton>
-            <RippleButton type="submit" disabled={saving} rippleColor="#f87878"
-              className="bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] border-0 text-white transition-all duration-300">
+            </Button>
+            <Button type="submit" disabled={saving} variant="solid" size="sm">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FolderPlus className="h-4 w-4" />}
               {saving ? 'Creating…' : 'Create Project'}
-            </RippleButton>
+            </Button>
           </div>
         </form>
       </div>
@@ -367,25 +369,21 @@ function ConfirmDeleteModal({ title, message, onConfirm, onCancel }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}
     >
-      <div className="w-full max-w-sm bg-gradient-to-br from-[#1a0a0a]/95 to-black/95 backdrop-blur-xl border border-red-900/30 rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+      <div className="w-full max-w-sm bg-gray-950/95 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
         <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+          <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-sm font-semibold text-white">{title}</h3>
             <p className="text-sm text-gray-400 mt-1">{message}</p>
           </div>
         </div>
         <div className="flex justify-end gap-3">
-          <RippleButton onClick={onCancel} className="text-gray-500 hover:text-white border-gray-800/60 bg-transparent">
+          <Button onClick={onCancel} variant="ghost" neon={false} size="sm">
             Cancel
-          </RippleButton>
-          <RippleButton
-            onClick={onConfirm}
-            rippleColor="#ef4444"
-            className="bg-red-900/60 hover:bg-red-800/70 border-red-700/50 text-white"
-          >
+          </Button>
+          <Button onClick={onConfirm} variant="destructive" size="sm">
             Delete
-          </RippleButton>
+          </Button>
         </div>
       </div>
     </div>
@@ -408,8 +406,8 @@ function TaskRow({ task, onDelete, onToggleComplete }) {
     <div className={cn(
       'group flex flex-col gap-2 p-4 rounded-xl border transition-colors backdrop-blur-sm',
       done
-        ? 'border-[#4a1010]/40 bg-[#0d0000]/75 opacity-50'
-        : 'border-[#4a1010]/40 bg-[#0d0000]/75 hover:border-[#F23B3B]/25 hover:bg-[#0d0000]/85'
+        ? 'border-gray-800/40 bg-gray-900/30 opacity-50'
+        : 'border-gray-800/40 bg-gray-900/30 hover:border-gray-700/50 hover:bg-gray-900/50'
     )}>
       <div className="flex items-start gap-3">
         <button
@@ -442,10 +440,17 @@ function TaskRow({ task, onDelete, onToggleComplete }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pl-7">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#F23B3B]/10 border border-[#F23B3B]/20 text-[#F23B3B]">
-            <Layers className="h-3 w-3" />
-            {task.projectTitle}
-          </span>
+          {task.projectTitle && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-white/5 border border-white/10 text-gray-400">
+              <Layers className="h-3 w-3" />
+              {task.projectTitle}
+            </span>
+          )}
+          {!task.projectTitle && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-white/5 border border-white/10 text-gray-500">
+              Standalone
+            </span>
+          )}
           {task.due_date && (
             <span className={cn(
               'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
@@ -464,10 +469,14 @@ function TaskRow({ task, onDelete, onToggleComplete }) {
   )
 }
 
-function AllTasksView({ directory, onDeleteTask, onToggleComplete }) {
-  const tasks = flattenTasks(directory)
+function AllTasksView({ directory, standaloneTasks, onDeleteTask, onToggleComplete }) {
+  const projectTasks = flattenTasks(directory)
+  const allTasks = [
+    ...projectTasks,
+    ...(standaloneTasks ?? []).map(t => ({ ...t, projectTitle: null })),
+  ]
 
-  if (tasks.length === 0) {
+  if (allTasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-600 text-sm gap-2">
         <List className="h-8 w-8 opacity-40" />
@@ -476,7 +485,7 @@ function AllTasksView({ directory, onDeleteTask, onToggleComplete }) {
     )
   }
 
-  const sorted = [...tasks].sort((a, b) => {
+  const sorted = [...allTasks].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1
     return (b.priority_level ?? 0) - (a.priority_level ?? 0)
   })
@@ -490,7 +499,7 @@ function AllTasksView({ directory, onDeleteTask, onToggleComplete }) {
   )
 }
 
-// ─── Project Tiles View (default) ─────────────────────────────────────────────
+// ─── Project Tiles View ────────────────────────────────────────────────────────
 
 function TileTaskRow({ task, onToggleComplete }) {
   const checkRef = useRef(null)
@@ -522,13 +531,14 @@ function TileTaskRow({ task, onToggleComplete }) {
   )
 }
 
-function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, onToggleComplete }) {
+function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, onToggleComplete, onResolveProject }) {
   const tasks    = project.task ?? []
   const done     = tasks.filter((t) => t.completed).length
   const preview  = tasks.slice(0, 3)
   const progress = tasks.length > 0 ? (done / tasks.length) * 100 : 0
 
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [resolving, setResolving]         = useState(false)
 
   function handleDeleteClick(e) {
     e.stopPropagation()
@@ -539,26 +549,25 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
     }
   }
 
+  async function handleResolve(e) {
+    e.stopPropagation()
+    setResolving(true)
+    try {
+      await onResolveProject(project.project_id)
+    } finally {
+      setResolving(false)
+    }
+  }
+
   return (
     <>
-      {/* Hover pop-out wrapper */}
-      <div className="group cursor-default transform transition-all duration-500 hover:scale-105 hover:-rotate-1">
+      <div className="group cursor-default transform transition-all duration-300 hover:scale-[1.02] hover:-rotate-[0.5deg]">
+        <div className="relative flex flex-col rounded-2xl border border-gray-800/60 bg-gray-950/80 shadow-lg backdrop-blur-xl overflow-hidden hover:border-gray-700/60 transition-all duration-300">
 
-        {/* Card */}
-        <div className="relative flex flex-col rounded-2xl border border-white/10 bg-gradient-to-br from-[#060608] via-[#0d0d12] to-[#060608] shadow-2xl backdrop-blur-xl overflow-hidden hover:border-white/20 hover:shadow-[#F23B3B]/20 hover:shadow-2xl transition-all duration-500">
-
-          {/* ── Animated background glows ── */}
-          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-tr from-[#F23B3B]/10 to-[#F23B3B]/5 opacity-40 group-hover:opacity-70 transition-opacity duration-500" />
-            <div className="absolute -bottom-16 -left-16 w-40 h-40 rounded-full bg-gradient-to-tr from-[#F23B3B]/20 to-transparent blur-3xl opacity-30 group-hover:opacity-60 group-hover:scale-110 transform transition-all duration-700 animate-pulse" />
-            <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-[#F23B3B]/5 blur-xl animate-ping" style={{ animationDuration: '3s' }} />
-            {/* Sheen sweep */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 translate-x-full group-hover:-translate-x-full transition-transform duration-1000" />
+          {/* Subtle top gradient */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
           </div>
-
-          {/* ── Corner accents ── */}
-          <div className="absolute top-0 left-0 w-16 h-16 bg-gradient-to-br from-white/8 to-transparent rounded-br-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
-          <div className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-[#F23B3B]/10 to-transparent rounded-tl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 
           {/* ── Content ── */}
           <div className="relative z-10 flex flex-col flex-1">
@@ -566,7 +575,7 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
             {/* Header */}
             <div className="flex items-start justify-between px-5 pt-5 pb-3">
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-white truncate group-hover:text-[#fec4c4] transition-colors duration-300">
+                <h3 className="text-sm font-semibold text-white truncate">
                   {project.title}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
@@ -574,13 +583,26 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
                   <span className="text-xs text-gray-600">{done}/{tasks.length} done</span>
                 </div>
               </div>
-              <button
-                onClick={handleDeleteClick}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 ml-2 mt-0.5 shrink-0"
-                title="Delete project"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              <div className="flex items-center gap-1.5 ml-2 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={handleResolve}
+                  disabled={resolving}
+                  className="text-gray-600 hover:text-green-400 transition-colors"
+                  title="Mark project as resolved"
+                >
+                  {resolving
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <CheckCheck className="h-3.5 w-3.5" />
+                  }
+                </button>
+                <button
+                  onClick={handleDeleteClick}
+                  className="text-gray-600 hover:text-red-400 transition-colors"
+                  title="Delete project"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
 
             {/* Progress bar */}
@@ -588,7 +610,7 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
               <div className="px-5 pb-3">
                 <div className="h-1 w-full rounded-full bg-white/5 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#F23B3B] to-[#f87878] transition-all duration-500"
+                    className="h-full rounded-full bg-white/20 transition-all duration-500"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -609,22 +631,14 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
               )}
             </div>
 
-            {/* Divider dots */}
-            <div className="flex justify-center gap-1.5 pb-3 opacity-30 group-hover:opacity-70 transition-opacity duration-300">
-              {[0, 0.1, 0.2].map((delay) => (
-                <div key={delay} className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: `${delay}s` }} />
-              ))}
-            </div>
-
             {/* See all tasks */}
-            <div className="px-5 pb-4 pt-1 border-t border-white/5">
-              <RippleButton
+            <div className="px-5 pb-4 pt-1 border-t border-gray-800/40">
+              <button
                 onClick={() => onSeeAllTasks(project.project_id)}
-                rippleColor="#F23B3B"
-                className="w-full justify-center text-[#F23B3B] hover:text-[#f87878] border-[#F23B3B]/20 bg-[#F23B3B]/8 hover:bg-[#F23B3B]/10 text-xs py-1.5"
+                className="w-full text-xs text-gray-500 hover:text-white py-1.5 transition-colors"
               >
-                See all tasks
-              </RippleButton>
+                See all tasks →
+              </button>
             </div>
           </div>
         </div>
@@ -642,8 +656,27 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
   )
 }
 
-function ProjectsTileView({ directory, onSeeAllTasks, onDeleteProject, onDeleteTask, onToggleComplete }) {
-  if (directory.length === 0) {
+function StandaloneTasksCard({ tasks, onToggleComplete }) {
+  if (!tasks || tasks.length === 0) return null
+
+  return (
+    <div className="rounded-2xl border border-gray-800/50 bg-gray-950/60 backdrop-blur-sm p-4 flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <List className="h-4 w-4 text-gray-500" />
+        <span className="text-sm font-semibold text-gray-300">Standalone Tasks</span>
+        <span className="text-xs text-gray-600">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {tasks.map((task) => (
+          <TileTaskRow key={task.task_id} task={task} onToggleComplete={onToggleComplete} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProjectsTileView({ directory, standaloneTasks, onSeeAllTasks, onDeleteProject, onDeleteTask, onToggleComplete, onResolveProject }) {
+  if (directory.length === 0 && (!standaloneTasks || standaloneTasks.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-600 text-sm gap-2">
         <LayoutGrid className="h-8 w-8 opacity-40" />
@@ -653,17 +686,23 @@ function ProjectsTileView({ directory, onSeeAllTasks, onDeleteProject, onDeleteT
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {directory.map((project) => (
-        <ProjectTile
-          key={project.project_id}
-          project={project}
-          onSeeAllTasks={onSeeAllTasks}
-          onDeleteProject={onDeleteProject}
-          onDeleteTask={onDeleteTask}
-          onToggleComplete={onToggleComplete}
-        />
-      ))}
+    <div className="flex flex-col gap-4">
+      {directory.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {directory.map((project) => (
+            <ProjectTile
+              key={project.project_id}
+              project={project}
+              onSeeAllTasks={onSeeAllTasks}
+              onDeleteProject={onDeleteProject}
+              onDeleteTask={onDeleteTask}
+              onToggleComplete={onToggleComplete}
+              onResolveProject={onResolveProject}
+            />
+          ))}
+        </div>
+      )}
+      <StandaloneTasksCard tasks={standaloneTasks} onToggleComplete={onToggleComplete} />
     </div>
   )
 }
@@ -681,7 +720,7 @@ function AccordionTaskRow({ task, onDeleteTask, onToggleComplete }) {
 
   return (
     <div className={cn(
-      'group px-5 py-3.5 flex flex-col gap-2 hover:bg-[#F23B3B]/5 transition-colors',
+      'group px-5 py-3.5 flex flex-col gap-2 hover:bg-white/3 transition-colors',
       task.completed && 'opacity-50'
     )}>
       <div className="flex items-center gap-3">
@@ -721,8 +760,9 @@ function AccordionTaskRow({ task, onDeleteTask, onToggleComplete }) {
   )
 }
 
-function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDeleteTask, onToggleComplete }) {
+function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDeleteTask, onToggleComplete, onResolveProject }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [resolving, setResolving]         = useState(false)
   const tasks = project.task ?? []
   const done  = tasks.filter((t) => t.completed).length
 
@@ -735,12 +775,22 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
     }
   }
 
+  async function handleResolve(e) {
+    e.stopPropagation()
+    setResolving(true)
+    try {
+      await onResolveProject(project.project_id)
+    } finally {
+      setResolving(false)
+    }
+  }
+
   return (
     <>
-      <div className="border border-[#4a1010]/50 rounded-xl overflow-hidden hover:border-[#F23B3B]/20 transition-colors backdrop-blur-sm bg-[#0d0000]/75">
+      <div className="border border-gray-800/50 rounded-xl overflow-hidden hover:border-gray-700/50 transition-colors backdrop-blur-sm bg-gray-950/60">
         <button
           onClick={onToggle}
-          className="w-full flex items-center gap-3 px-5 py-4 bg-[#0d0000]/75 hover:bg-[#F23B3B]/8 transition-colors text-left group"
+          className="w-full flex items-center gap-3 px-5 py-4 hover:bg-white/3 transition-colors text-left group"
         >
           {expanded
             ? <ChevronDown  className="h-4 w-4 text-gray-600 shrink-0" />
@@ -753,11 +803,22 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
             {tasks.length > 0 && (
               <div className="w-16 h-1 rounded-full bg-white/5 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#4a1010] via-[#F23B3B] to-[#f87878] transition-all duration-500"
+                  className="h-full rounded-full bg-white/20 transition-all duration-500"
                   style={{ width: `${(done / tasks.length) * 100}%` }}
                 />
               </div>
             )}
+            <button
+              onClick={handleResolve}
+              disabled={resolving}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-green-400 ml-1"
+              title="Mark project as resolved"
+            >
+              {resolving
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <CheckCheck className="h-3.5 w-3.5" />
+              }
+            </button>
             <button
               onClick={handleDeleteClick}
               className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-red-400 ml-1"
@@ -769,7 +830,7 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
         </button>
 
         {expanded && (
-          <div className="divide-y divide-[#4a1010]/30 bg-[#0d0000]/75">
+          <div className="divide-y divide-gray-800/30 bg-black/20">
             {tasks.length === 0 && (
               <p className="px-10 py-4 text-sm text-gray-700 text-center">No tasks in this project.</p>
             )}
@@ -797,7 +858,7 @@ function ProjectAccordion({ project, expanded, onToggle, onDeleteProject, onDele
   )
 }
 
-function ProjectsDirectoryView({ directory, expandedProjects, onToggleExpand, onDeleteProject, onDeleteTask, onToggleComplete }) {
+function ProjectsDirectoryView({ directory, expandedProjects, onToggleExpand, onDeleteProject, onDeleteTask, onToggleComplete, onResolveProject }) {
   if (directory.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-600 text-sm gap-2">
@@ -818,6 +879,7 @@ function ProjectsDirectoryView({ directory, expandedProjects, onToggleExpand, on
           onDeleteProject={onDeleteProject}
           onDeleteTask={onDeleteTask}
           onToggleComplete={onToggleComplete}
+          onResolveProject={onResolveProject}
         />
       ))}
     </div>
@@ -828,6 +890,7 @@ function ProjectsDirectoryView({ directory, expandedProjects, onToggleExpand, on
 
 export default function Dashboard() {
   const [directory,         setDirectory]         = useState([])
+  const [standaloneTasks,   setStandaloneTasks]   = useState([])
   const [loading,           setLoading]           = useState(true)
   const [error,             setError]             = useState('')
   const [activeView,        setActiveView]        = useState('projects')
@@ -849,13 +912,26 @@ export default function Dashboard() {
     }
   }, [])
 
-  useEffect(() => { fetchDirectory() }, [fetchDirectory])
+  const fetchStandaloneTasks = useCallback(async () => {
+    try {
+      const { data } = await api.get('/tasks?standalone=true')
+      setStandaloneTasks(Array.isArray(data) ? data : [])
+    } catch {
+      // Standalone tasks endpoint may not exist — fail silently
+      setStandaloneTasks([])
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchDirectory()
+    fetchStandaloneTasks()
+  }, [fetchDirectory, fetchStandaloneTasks])
 
   async function handleDeleteTask(taskId) {
     setIsDeletingGlobal(true)
     try {
       await api.delete(`/tasks/${taskId}`)
-      await fetchDirectory()
+      await Promise.all([fetchDirectory(), fetchStandaloneTasks()])
     } finally {
       setIsDeletingGlobal(false)
     }
@@ -871,8 +947,17 @@ export default function Dashboard() {
     }
   }
 
+  async function handleResolveProject(projectId) {
+    try {
+      await api.patch(`/projects/${projectId}`, { resolved: true })
+      toast.success('Project marked as resolved')
+      await fetchDirectory()
+    } catch (err) {
+      toast.error(err?.response?.data?.detail ?? 'Failed to resolve project.')
+    }
+  }
+
   async function handleToggleComplete(taskId, completed) {
-    // Optimistically update local state so the UI snaps immediately
     setDirectory((prev) =>
       prev.map((project) => ({
         ...project,
@@ -881,6 +966,9 @@ export default function Dashboard() {
         ),
       }))
     )
+    setStandaloneTasks((prev) =>
+      prev.map((t) => t.task_id === taskId ? { ...t, completed } : t)
+    )
     try {
       const payload = completed
         ? { completed: true }
@@ -888,7 +976,7 @@ export default function Dashboard() {
       await api.patch(`/tasks/${taskId}`, payload)
     } catch {
       toast.error('Failed to update task — changes rolled back')
-      await fetchDirectory()
+      await Promise.all([fetchDirectory(), fetchStandaloneTasks()])
     }
   }
 
@@ -905,7 +993,7 @@ export default function Dashboard() {
     })
   }
 
-  const allTasks  = flattenTasks(directory)
+  const allTasks  = [...flattenTasks(directory), ...standaloneTasks]
   const doneTasks = allTasks.filter((t) => t.completed).length
 
   const tabs = [
@@ -929,29 +1017,31 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
           {!loading && !error && (
-            <p className="text-sm text-white/50 mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               {doneTasks}/{allTasks.length} tasks completed across {directory.length} project{directory.length !== 1 ? 's' : ''}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <DotFlowButton
+          <Button
             onClick={() => setShowProjectModal(true)}
-            dotVariant="pulse"
+            variant="ghost"
+            size="sm"
+            neon={false}
           >
             New Project
-          </DotFlowButton>
-          <DotFlowButton
+          </Button>
+          <Button
             onClick={() => setShowTaskModal(true)}
-            dotVariant="flow"
+            size="sm"
           >
             Create Task
-          </DotFlowButton>
+          </Button>
         </div>
       </div>
 
       {/* ── View tabs ── */}
-      <div className="inline-flex self-start bg-[#0d0000]/75 backdrop-blur-sm border border-[#4a1010]/50 rounded-lg p-1 gap-0.5">
+      <div className="inline-flex self-start bg-gray-950/80 backdrop-blur-sm border border-gray-800/50 rounded-lg p-1 gap-0.5">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -959,8 +1049,8 @@ export default function Dashboard() {
             className={cn(
               'flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
               activeView === id
-                ? 'bg-[#F23B3B]/20 text-[#F23B3B]'
-                : 'text-white/40 hover:text-white'
+                ? 'bg-white/10 text-white'
+                : 'text-gray-500 hover:text-gray-300'
             )}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -987,15 +1077,22 @@ export default function Dashboard() {
       {!loading && !error && activeView === 'projects' && (
         <ProjectsTileView
           directory={directory}
+          standaloneTasks={standaloneTasks}
           onSeeAllTasks={handleSeeAllTasks}
           onDeleteProject={handleDeleteProject}
           onDeleteTask={handleDeleteTask}
           onToggleComplete={handleToggleComplete}
+          onResolveProject={handleResolveProject}
         />
       )}
 
       {!loading && !error && activeView === 'tasks' && (
-        <AllTasksView directory={directory} onDeleteTask={handleDeleteTask} onToggleComplete={handleToggleComplete} />
+        <AllTasksView
+          directory={directory}
+          standaloneTasks={standaloneTasks}
+          onDeleteTask={handleDeleteTask}
+          onToggleComplete={handleToggleComplete}
+        />
       )}
 
       {!loading && !error && activeView === 'directory' && (
@@ -1006,6 +1103,7 @@ export default function Dashboard() {
           onDeleteProject={handleDeleteProject}
           onDeleteTask={handleDeleteTask}
           onToggleComplete={handleToggleComplete}
+          onResolveProject={handleResolveProject}
         />
       )}
 
@@ -1014,7 +1112,7 @@ export default function Dashboard() {
         <CreateTaskModal
           directory={directory}
           onClose={() => setShowTaskModal(false)}
-          onSuccess={() => { setShowTaskModal(false); fetchDirectory() }}
+          onSuccess={() => { setShowTaskModal(false); fetchDirectory(); fetchStandaloneTasks() }}
         />
       )}
 

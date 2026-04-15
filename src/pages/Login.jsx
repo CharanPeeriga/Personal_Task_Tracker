@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { GrainGradientBackground } from '@/components/ui/grain-gradient'
+import { StarsBackground } from '@/components/ui/stars-background'
 import { ShineBorder } from '@/components/ui/shine-border'
 import { Mail, Lock, ArrowLeft } from 'lucide-react'
 
@@ -34,8 +34,10 @@ export default function Login() {
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-black px-4 overflow-hidden">
 
-      {/* Background */}
-      <GrainGradientBackground />
+      {/* Stars background at 50% opacity */}
+      <div className="absolute inset-0 opacity-50">
+        <StarsBackground className="absolute inset-0" />
+      </div>
 
       <div className="relative z-10 w-full max-w-md flex flex-col gap-6">
 
@@ -56,7 +58,7 @@ export default function Login() {
 
         {/* Card */}
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl p-8 flex flex-col gap-5">
-          <ShineBorder shineColor="#F23B3B" duration={10} borderWidth={1} />
+          <ShineBorder shineColor="rgba(255,255,255,0.3)" duration={10} borderWidth={1} />
 
           <h2 className="relative z-10 text-xl font-semibold text-white">Welcome back</h2>
 
@@ -65,7 +67,7 @@ export default function Login() {
             {/* Email */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="email" className="text-white/60 text-sm">Email address</Label>
-              <div className="flex items-center gap-2 border border-white/10 rounded-lg px-3 h-12 bg-white/5 focus-within:ring-2 focus-within:ring-[#F23B3B]/60 focus-within:border-transparent transition">
+              <div className="flex items-center gap-2 border border-white/10 rounded-lg px-3 h-12 bg-white/5 focus-within:ring-1 focus-within:ring-white/30 focus-within:border-white/20 transition">
                 <Mail className="h-5 w-5 text-white/30 shrink-0" />
                 <Input
                   id="email"
@@ -82,7 +84,7 @@ export default function Login() {
             {/* Password */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="password" className="text-white/60 text-sm">Password</Label>
-              <div className="flex items-center gap-2 border border-white/10 rounded-lg px-3 h-12 bg-white/5 focus-within:ring-2 focus-within:ring-[#F23B3B]/60 focus-within:border-transparent transition">
+              <div className="flex items-center gap-2 border border-white/10 rounded-lg px-3 h-12 bg-white/5 focus-within:ring-1 focus-within:ring-white/30 focus-within:border-white/20 transition">
                 <Lock className="h-5 w-5 text-white/30 shrink-0" />
                 <Input
                   id="password"
@@ -104,14 +106,14 @@ export default function Login() {
                   Remember me
                 </Label>
               </div>
-              <button type="button" className="text-sm text-[#F23B3B] hover:text-[#f87878] transition">
+              <button type="button" className="text-sm text-gray-500 hover:text-white transition">
                 Forgot password?
               </button>
             </div>
 
             {/* Error */}
             {error && (
-              <div className="bg-[#F23B3B]/10 border border-red-500/30 text-[#F23B3B] text-sm rounded-lg px-4 py-3">
+              <div className="bg-red-950/30 border border-red-900/40 text-red-400 text-sm rounded-lg px-4 py-3">
                 {error}
               </div>
             )}
@@ -119,8 +121,9 @@ export default function Login() {
             {/* Submit */}
             <Button
               type="submit"
+              variant="solid"
               disabled={loading}
-              className="w-full h-12 text-base font-medium rounded-lg bg-gradient-to-r from-[#8b1f1f] to-[#F23B3B] hover:from-[#F23B3B] hover:to-[#f87878] text-white border-0 transition-all duration-300 shadow-lg shadow-[#F23B3B]/20"
+              className="w-full h-12 text-base font-medium rounded-lg"
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>
@@ -129,7 +132,7 @@ export default function Login() {
 
         <p className="text-center text-white/40 text-sm">
           Don&apos;t have an account?{' '}
-          <Link to="/register" className="text-[#F23B3B] hover:text-[#f87878] transition">
+          <Link to="/register" className="text-white/70 hover:text-white transition">
             Create one
           </Link>
         </p>
