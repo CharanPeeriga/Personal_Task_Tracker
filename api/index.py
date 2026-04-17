@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 
 
 from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+from typing import Optional, List
+from datetime import datetime, timedelta
 
 
 # Load environment variables from the .env file
@@ -18,6 +18,8 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise Exception("Missing Supabase credentials in .env file")
+
+_supabase_base: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Initialize FastAPI
 app = FastAPI(title="Personal Task Tracker API")
@@ -39,17 +41,14 @@ app.add_middleware(StripApiPrefixMiddleware)
 def get_supabase_client(authorization: str = Header(None)) -> Client:
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header missing")
-    
+
     # Extract the token (usually "Bearer <token>")
     token = authorization.split(" ")[1] if " " in authorization else authorization
-    
-    # Create a fresh client for this request
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    
+
     # Set the user's session so Supabase RLS knows who is asking!
-    supabase.postgrest.auth(token)
-    
-    return supabase
+    _supabase_base.postgrest.auth(token)
+
+    return _supabase_base
 
 # --- Basic Health Check Route ---
 @app.get("/")
@@ -87,7 +86,8 @@ class TaskCreate(BaseModel):
     est_duration: Optional[int] = None
     priority_level: Optional[int] = None
     completed: Optional[bool] = False
-    project_id: int  # NOT NULL in DB — required
+    # Requires: ALTER TABLE public.task ALTER COLUMN project_id DROP NOT NULL;
+    project_id: Optional[int] = None
     block_id: Optional[int] = None
     due_date: Optional[datetime] = None
 
@@ -160,13 +160,13 @@ def create_project(project: ProjectCreate, authorization: str = Header(...), sup
 @app.get("/projects")
 def get_all_projects(supabase: Client = Depends(get_supabase_client)):
     # CHANGED: "Project" -> "project"
-    response = supabase.table("project").select("*").execute()
+    response = supabase.table("project").select("project_id, user_id, title, description, deadline, isarchived, priority_level, due_date").execute()
     return response.data
 
 @app.get("/projects/{project_id}")
 def get_project(project_id: int, supabase: Client = Depends(get_supabase_client)):
     # CHANGED: "Project" -> "project", and "Project_ID" -> "project_id"
-    response = supabase.table("project").select("*").eq("project_id", project_id).execute()
+    response = supabase.table("project").select("project_id, user_id, title, description, deadline, isarchived, priority_level, due_date").eq("project_id", project_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Project not found")
     return response.data[0]
@@ -211,7 +211,7 @@ def create_task(task: TaskCreate, authorization: str = Header(...), supabase: Cl
 @app.get("/tasks")
 def get_all_tasks(supabase: Client = Depends(get_supabase_client)):
     # RLS ensures they only see their own tasks
-    response = supabase.table("task").select("*").execute()
+    response = supabase.table("task").select("task_id, user_id, title, est_duration, priority_level, completed, project_id, block_id, completed_at, due_date").execute()
     return response.data
 
 @app.patch("/tasks/{task_id}")
@@ -258,7 +258,7 @@ def auto_assign_tasks(request: AssignTasksRequest, authorization: str = Header(.
     user_id = user_response.user.id
 
     # 2. Get the Time Block to determine our "Knapsack Capacity"
-    block_response = supabase.table("time_block").select("*").eq("block_id", request.block_id).execute()
+    block_response = supabase.table("time_block").select("block_id, user_id, name, start_time, end_time").eq("block_id", request.block_id).execute()
     if not block_response.data:
         raise HTTPException(status_code=404, detail="Time block not found")
     
@@ -271,7 +271,7 @@ def auto_assign_tasks(request: AssignTasksRequest, authorization: str = Header(.
 
     # 3. Fetch all uncompleted, unassigned tasks with their Project Priorities
     # Note: In a real app, you might want to do a JOIN here, but we will fetch projects separately for simplicity
-    tasks_response = supabase.table("task").select("*").eq("completed", False).is_("block_id", "null").execute()
+    tasks_response = supabase.table("task").select("task_id, user_id, title, est_duration, priority_level, completed, project_id, block_id, completed_at, due_date").eq("completed", False).is_("block_id", "null").execute()
     projects_response = supabase.table("project").select("project_id, priority_level").execute()
     
     if not tasks_response.data:
@@ -325,9 +325,7 @@ def auto_assign_tasks(request: AssignTasksRequest, authorization: str = Header(.
 
     # 7. Update the database to assign these tasks to the time block
     if selected_task_ids:
-        # Update tasks in Supabase
-        for t_id in selected_task_ids:
-            supabase.table("task").update({"block_id": request.block_id}).eq("task_id", t_id).execute()
+        supabase.table("task").update({"block_id": request.block_id}).in_("task_id", selected_task_ids).execute()
 
     return {
         "message": "Tasks assigned successfully",
@@ -375,7 +373,7 @@ def create_tag(tag: TagCreate, authorization: str = Header(...), supabase: Clien
 
 @app.get("/tags")
 def get_all_tags(supabase: Client = Depends(get_supabase_client)):
-    response = supabase.table("tag").select("*").execute()
+    response = supabase.table("tag").select("tag_id, user_id, name, color_hex").execute()
     return response.data
 
 @app.delete("/tags/{tag_id}")
@@ -394,7 +392,7 @@ def create_resource(resource: ResourceCreate, supabase: Client = Depends(get_sup
 
 @app.get("/tasks/{task_id}/resources")
 def get_task_resources(task_id: int, supabase: Client = Depends(get_supabase_client)):
-    response = supabase.table("resource").select("*").eq("task_id", task_id).execute()
+    response = supabase.table("resource").select("resource_id, task_id, title, url, platform").eq("task_id", task_id).execute()
     return response.data
 
 @app.delete("/resources/{resource_id}")
@@ -424,18 +422,18 @@ def remove_tag_from_task(task_id: int, tag_id: int, supabase: Client = Depends(g
 @app.get("/directory")
 def get_project_directory(supabase: Client = Depends(get_supabase_client)):
     # Automatically grabs Tasks, and the Resources/Tags associated with those Tasks!
-    response = supabase.table("project").select("*, task(*, resource(*), tag(*))").execute()
+    response = supabase.table("project").select("project_id, user_id, title, description, deadline, isarchived, priority_level, due_date, task(*, resource(*), tag(*))").execute()
     return response.data
 
 @app.get("/blocks-directory")
 def get_blocks_directory(supabase: Client = Depends(get_supabase_client)):
-    response = supabase.table("time_block").select("*, task(*, resource(*), tag(*))").execute()
+    response = supabase.table("time_block").select("block_id, user_id, name, start_time, end_time, task(*, resource(*), tag(*))").execute()
     return response.data
 
 @app.get("/profile-data")
 def get_profile_data(supabase: Client = Depends(get_supabase_client)):
     # Fetch all projects with their tasks
-    projects_response = supabase.table("project").select("*, task(*, resource(*), tag(*))").execute()
+    projects_response = supabase.table("project").select("project_id, user_id, title, description, deadline, isarchived, priority_level, due_date, task(*, resource(*), tag(*))").execute()
     projects = projects_response.data
 
     # Completed tasks (for calendar and resolved tasks list)
@@ -455,14 +453,150 @@ def get_profile_data(supabase: Client = Depends(get_supabase_client)):
 
     calendar_data = [{"date": k, "count": v} for k, v in calendar_counts.items()]
 
-    # Resolved projects: all tasks completed (must have at least one task)
-    resolved_projects = [
-        p for p in projects
-        if p.get("task") and all(t.get("completed") for t in p["task"])
-    ]
+    resolved_projects = [p for p in projects if p.get("isarchived") == True]
 
     return {
         "calendar_data": calendar_data,
         "resolved_projects": resolved_projects,
         "completed_tasks": completed_tasks,
     }
+
+
+# --- SEARCH ENDPOINT ---
+
+@app.get("/search")
+def search(q: str, supabase: Client = Depends(get_supabase_client)):
+    tasks_response = supabase.table("task").select("task_id, title, est_duration, priority_level, completed, project_id, block_id, due_date").ilike("title", f"%{q}%").execute()
+    projects_response = supabase.table("project").select("project_id, title, description, priority_level, isarchived, due_date").ilike("title", f"%{q}%").execute()
+    return {
+        "tasks": tasks_response.data,
+        "projects": projects_response.data,
+    }
+
+
+# --- STATS ENDPOINTS ---
+
+@app.get("/stats/completions-by-date")
+def get_completions_by_date(supabase: Client = Depends(get_supabase_client)):
+    response = supabase.rpc("get_completions_by_date").execute()
+    return response.data
+
+
+# --- EVENT MODELS ---
+
+class EventCreate(BaseModel):
+    title: str
+    color: Optional[str] = '#3b82f6'
+    is_recurring: bool
+    day_of_week: Optional[int] = None
+    specific_date: Optional[str] = None
+    start_time: str
+    end_time: str
+    recurrence_start: Optional[str] = None
+    recurrence_end:   Optional[str] = None
+
+class EventPatch(BaseModel):
+    title: Optional[str] = None
+    color: Optional[str] = None
+    is_recurring: Optional[bool] = None
+    day_of_week: Optional[int] = None
+    specific_date: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    recurrence_start: Optional[str] = None
+    recurrence_end:   Optional[str] = None
+
+
+# --- EVENT ENDPOINTS ---
+
+@app.post("/events")
+def create_event(event: EventCreate, authorization: str = Header(...), supabase: Client = Depends(get_supabase_client)):
+    token = authorization.split(" ")[1] if " " in authorization else authorization
+    user_response = supabase.auth.get_user(token)
+    event_data = event.dict(exclude_unset=True)
+    event_data["user_id"] = user_response.user.id
+    response = supabase.table("event").insert(event_data).execute()
+    return response.data
+
+@app.get("/events")
+def get_events(supabase: Client = Depends(get_supabase_client)):
+    response = supabase.table("event").select("*").execute()
+    return response.data
+
+@app.patch("/events/{event_id}")
+def patch_event(event_id: int, patch: EventPatch, supabase: Client = Depends(get_supabase_client)):
+    update_data = patch.dict(exclude_unset=True)
+    if not update_data:
+        return {"message": "No fields provided to update"}
+    response = supabase.table("event").update(update_data).eq("event_id", event_id).execute()
+    return response.data
+
+@app.delete("/events/{event_id}")
+def delete_event(event_id: int, supabase: Client = Depends(get_supabase_client)):
+    supabase.table("event").delete().eq("event_id", event_id).execute()
+    return {"message": f"Event {event_id} deleted successfully"}
+
+
+# --- AVAILABILITY ENDPOINT ---
+
+@app.get("/availability")
+def check_availability(date: str, supabase: Client = Depends(get_supabase_client)):
+    date_obj = datetime.strptime(date, '%Y-%m-%d')
+    # Python weekday(): 0=Mon … 6=Sun → DB day_of_week: 0=Sun, 1=Mon … 6=Sat
+    db_day = (date_obj.weekday() + 1) % 7
+    next_date = (date_obj + timedelta(days=1)).strftime('%Y-%m-%d')
+
+    recurring   = supabase.table("event").select("start_time, end_time, recurrence_start, recurrence_end").eq("is_recurring", True).eq("day_of_week", db_day).execute()
+    one_time    = supabase.table("event").select("start_time, end_time").eq("is_recurring", False).eq("specific_date", date).execute()
+    blocks_resp = supabase.table("time_block").select("start_time, end_time").gte("start_time", f"{date}T00:00:00").lt("start_time", f"{next_date}T00:00:00").execute()
+
+    def to_minutes(t: str) -> int:
+        parts = t.split(':')
+        return int(parts[0]) * 60 + int(parts[1])
+
+    busy = []
+    for ev in (recurring.data or []):
+        rec_start = ev.get('recurrence_start')
+        rec_end   = ev.get('recurrence_end')
+        if rec_start and date < rec_start: continue
+        if rec_end   and date > rec_end:   continue
+        busy.append([to_minutes(ev['start_time']), to_minutes(ev['end_time'])])
+    for ev in (one_time.data or []):
+        busy.append([to_minutes(ev['start_time']), to_minutes(ev['end_time'])])
+    for block in (blocks_resp.data or []):
+        st = datetime.fromisoformat(block['start_time'])
+        et = datetime.fromisoformat(block['end_time'])
+        busy.append([st.hour * 60 + st.minute, et.hour * 60 + et.minute])
+
+    busy.sort()
+    merged = []
+    for start, end in busy:
+        if merged and start <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], end)
+        else:
+            merged.append([start, end])
+
+    DAY_START, DAY_END, MIN_GAP = 360, 1380, 15
+    free_slots = []
+    cursor = DAY_START
+
+    for start, end in merged:
+        if start > cursor:
+            gap_s = cursor
+            gap_e = min(start, DAY_END)
+            if gap_e > gap_s and gap_e - gap_s >= MIN_GAP:
+                free_slots.append({
+                    'start': f"{gap_s // 60:02d}:{gap_s % 60:02d}",
+                    'end':   f"{gap_e // 60:02d}:{gap_e % 60:02d}",
+                    'duration_minutes': gap_e - gap_s,
+                })
+        cursor = max(cursor, end)
+
+    if cursor < DAY_END and DAY_END - cursor >= MIN_GAP:
+        free_slots.append({
+            'start': f"{cursor // 60:02d}:{cursor % 60:02d}",
+            'end':   f"{DAY_END // 60:02d}:{DAY_END % 60:02d}",
+            'duration_minutes': DAY_END - cursor,
+        })
+
+    return free_slots

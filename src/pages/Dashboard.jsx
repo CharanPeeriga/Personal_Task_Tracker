@@ -139,13 +139,14 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
     setError('')
     setSaving(true)
     try {
-      await api.post('/tasks', {
+      const body = {
         title:          form.title,
-        project_id:     parseInt(form.project_id),  // NOT NULL — always required
         est_duration:   form.est_duration   ? parseInt(form.est_duration)   : undefined,
         priority_level: form.priority_level ? parseInt(form.priority_level) : undefined,
         due_date:       form.due_date        ? new Date(form.due_date).toISOString() : undefined,
-      })
+      }
+      if (form.project_id) body.project_id = parseInt(form.project_id)
+      await api.post('/tasks', body)
       toast.success(`Task "${form.title}" created`)
       onSuccess()
     } catch (err) {
@@ -214,16 +215,15 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="task-project" className="text-gray-400 text-xs">Project *</Label>
+            <Label htmlFor="task-project" className="text-gray-400 text-xs">Project</Label>
             <select
               id="task-project"
-              required
               value={form.project_id}
               onChange={(e) => set('project_id', e.target.value)}
               className={SELECT_CLS}
               style={{ backgroundColor: '#000', color: '#fff' }}
             >
-              <option value="" disabled style={{ backgroundColor: '#000', color: '#fff' }}>— Select a project —</option>
+              <option value="" style={{ backgroundColor: '#000', color: '#fff' }}>No project (standalone)</option>
               {directory.map((p) => (
                 <option key={p.project_id} value={p.project_id} style={{ backgroundColor: '#000', color: '#fff' }}>{p.title}</option>
               ))}
@@ -252,7 +252,7 @@ function CreateTaskModal({ directory, onClose, onSuccess }) {
             <Button type="button" onClick={onClose} variant="ghost" neon={false} size="sm">
               Cancel
             </Button>
-            <Button type="submit" disabled={saving || !form.project_id} variant="solid" size="sm">
+            <Button type="submit" disabled={saving} variant="solid" size="sm">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               {saving ? 'Creating…' : 'Create Task'}
             </Button>
@@ -407,7 +407,7 @@ function EditTaskModal({ task, directory, onClose, onSuccess }) {
         title:          form.title,
         est_duration:   form.est_duration   ? parseInt(form.est_duration)   : undefined,
         priority_level: form.priority_level ? parseInt(form.priority_level) : undefined,
-        project_id:     form.project_id     ? parseInt(form.project_id)     : undefined,
+        project_id:     form.project_id     ? parseInt(form.project_id)     : null,
         due_date:       form.due_date        ? new Date(form.due_date).toISOString() : undefined,
       })
       toast.success('Task updated')
@@ -555,15 +555,15 @@ function EditTaskModal({ task, directory, onClose, onSuccess }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-project" className="text-gray-400 text-xs">Project *</Label>
+            <Label htmlFor="edit-project" className="text-gray-400 text-xs">Project</Label>
             <select
               id="edit-project"
-              required
               value={form.project_id}
               onChange={(e) => set('project_id', e.target.value)}
               className={SELECT_CLS}
               style={{ backgroundColor: '#000', color: '#fff' }}
             >
+              <option value="" style={{ backgroundColor: '#000', color: '#fff' }}>No project (standalone)</option>
               {directory.map((p) => (
                 <option key={p.project_id} value={p.project_id} style={{ backgroundColor: '#000', color: '#fff' }}>{p.title}</option>
               ))}
@@ -806,13 +806,21 @@ function TaskRow({ task, onDelete, onToggleComplete, onEdit }) {
           }
         </button>
           <div className="flex-1 min-w-0">
-            <span className={cn('text-sm font-medium', done ? 'line-through text-gray-600' : 'text-white')}>
+            <span className={cn('text-base font-medium', done ? 'line-through text-gray-600' : 'text-white')}>
               {task.title}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <DurationBadge minutes={task.est_duration} />
             {task.priority_level && <PriorityBadge level={task.priority_level} />}
+            {task.due_date && (
+              <span className="text-xs text-gray-500">
+                {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+            {!task.due_date && (
+              <span className="text-xs text-gray-700">no due date</span>
+            )}
             <button
               onClick={() => onEdit(task)}
               className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-white"
@@ -943,7 +951,7 @@ function TileTaskRow({ task, onToggleComplete }) {
           : <Circle       className="h-3 w-3 text-gray-700 hover:text-green-500 transition-colors" />
         }
       </button>
-      <span className={cn('text-xs truncate', task.completed ? 'line-through text-gray-600' : 'text-gray-300')}>
+      <span className={cn('text-sm truncate', task.completed ? 'line-through text-gray-600' : 'text-gray-300')}>
         {task.title}
       </span>
       {task.priority_level && (
@@ -958,11 +966,13 @@ function TileTaskRow({ task, onToggleComplete }) {
 function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, onToggleComplete, onResolveProject }) {
   const tasks    = project.task ?? []
   const done     = tasks.filter((t) => t.completed).length
-  const preview  = tasks.slice(0, 3)
+  const sorted  = [...tasks].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0))
+  const preview = sorted.slice(0, 3)
   const progress = tasks.length > 0 ? (done / tasks.length) * 100 : 0
 
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [resolving, setResolving]         = useState(false)
+  const [detailOpen, setDetailOpen]       = useState(false)
 
   function handleDeleteClick(e) {
     e.stopPropagation()
@@ -985,8 +995,11 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
 
   return (
     <>
-      <div className="group cursor-default transform transition-all duration-300 hover:scale-[1.02] hover:-rotate-[0.5deg]">
-        <div className="relative flex flex-col rounded-2xl border border-gray-800/60 bg-gray-950/80 shadow-lg backdrop-blur-xl overflow-hidden hover:border-gray-700/60 transition-all duration-300">
+      <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:-rotate-[0.5deg]">
+        <div
+          className="relative flex flex-col rounded-2xl border border-gray-800/60 bg-gray-950/80 shadow-lg backdrop-blur-xl overflow-hidden hover:border-gray-700/60 transition-all duration-300"
+          onClick={() => setDetailOpen(true)}
+        >
 
           {/* Subtle top gradient */}
           <div className="absolute inset-0 z-0 pointer-events-none">
@@ -999,12 +1012,20 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
             {/* Header */}
             <div className="flex items-start justify-between px-5 pt-5 pb-3">
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-white truncate">
+                <h3 className="text-base font-semibold text-white truncate">
                   {project.title}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
                   {project.priority_level && <PriorityBadge level={project.priority_level} />}
                   <span className="text-xs text-gray-600">{done}/{tasks.length} done</span>
+                  {project.due_date && (
+                    <span className="text-xs text-gray-500">
+                      Due {new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  )}
+                  {!project.due_date && (
+                    <span className="text-xs text-gray-700">no due date</span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1.5 ml-2 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1058,7 +1079,7 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
             {/* See all tasks */}
             <div className="px-5 pb-4 pt-1 border-t border-gray-800/40">
               <button
-                onClick={() => onSeeAllTasks(project.project_id)}
+                onClick={(e) => { e.stopPropagation(); onSeeAllTasks(project.project_id) }}
                 className="w-full text-xs text-gray-500 hover:text-white py-1.5 transition-colors"
               >
                 See all tasks →
@@ -1075,6 +1096,9 @@ function ProjectTile({ project, onSeeAllTasks, onDeleteProject, onDeleteTask, on
           onConfirm={() => { setConfirmDelete(false); onDeleteProject(project.project_id) }}
           onCancel={() => setConfirmDelete(false)}
         />
+      )}
+      {detailOpen && (
+        <ProjectDetailModal project={project} onClose={() => setDetailOpen(false)} />
       )}
     </>
   )
@@ -1099,8 +1123,90 @@ function StandaloneTasksCard({ tasks, onToggleComplete }) {
   )
 }
 
+function ProjectDetailModal({ project, onClose }) {
+  const tasks = [...(project.task ?? [])].sort((a, b) => (a.completed ? 1 : 0) - (b.completed ? 1 : 0))
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="w-full max-w-lg bg-gray-950/95 backdrop-blur-xl border border-gray-800/60 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col">
+        <div className="px-6 pt-6 pb-4 border-b border-gray-800/50 shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-base font-semibold text-white">{project.title}</h2>
+            <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors shrink-0">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex items-center gap-2 mt-1.5">
+            {project.priority_level && <PriorityBadge level={project.priority_level} />}
+            {project.due_date && (
+              <span className="text-xs text-gray-500">
+                Due {new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+          </div>
+          {project.description && (
+            <p className="text-sm text-gray-400 mt-2">{project.description}</p>
+          )}
+        </div>
+        <div className="overflow-y-auto flex-1 px-6 py-4 flex flex-col gap-3">
+          {tasks.length === 0 ? (
+            <p className="text-sm text-gray-600 text-center py-4">No tasks in this project.</p>
+          ) : (
+            tasks.map(task => (
+              <div key={task.task_id} className="rounded-xl border border-gray-800/40 bg-gray-900/40 p-3 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  {task.completed
+                    ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                    : <Circle       className="h-4 w-4 text-gray-700 shrink-0" />
+                  }
+                  <span className={cn('text-sm flex-1', task.completed ? 'line-through text-gray-600' : 'text-white')}>
+                    {task.title}
+                  </span>
+                  {task.priority_level && <PriorityBadge level={task.priority_level} />}
+                </div>
+                {(task.tag ?? []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pl-6">
+                    {task.tag.map(t => <TagPill key={t.tag_id} tag={t} />)}
+                  </div>
+                )}
+                {(task.resource ?? []).length > 0 && (
+                  <div className="flex flex-col gap-1 pl-6 mt-1">
+                    {task.resource.map(r => (
+                      <div key={r.resource_id} className="flex items-center gap-1.5">
+                        <ExternalLink className="h-3 w-3 text-gray-600 shrink-0" />
+                        <a
+                          href={r.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-400 hover:text-blue-300 truncate"
+                        >
+                          {r.title || r.platform || 'Link'}
+                        </a>
+                        {r.platform && (
+                          <span className="text-xs text-gray-600 bg-gray-800/50 px-1.5 py-0.5 rounded shrink-0">
+                            {r.platform}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ProjectsTileView({ directory, standaloneTasks, onSeeAllTasks, onDeleteProject, onDeleteTask, onToggleComplete, onResolveProject }) {
-  if (directory.length === 0 && (!standaloneTasks || standaloneTasks.length === 0)) {
+  const activeProjects = directory.filter(p => !p.isarchived)
+
+  if (activeProjects.length === 0 && (!standaloneTasks || standaloneTasks.length === 0)) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-600 text-sm gap-2">
         <LayoutGrid className="h-8 w-8 opacity-40" />
@@ -1111,9 +1217,9 @@ function ProjectsTileView({ directory, standaloneTasks, onSeeAllTasks, onDeleteP
 
   return (
     <div className="flex flex-col gap-4">
-      {directory.length > 0 && (
+      {activeProjects.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {directory.map((project) => (
+          {activeProjects.map((project) => (
             <ProjectTile
               key={project.project_id}
               project={project}
@@ -1159,12 +1265,20 @@ function AccordionTaskRow({ task, onDeleteTask, onToggleComplete, onEditTask }) 
             : <Circle       className="h-4 w-4 text-gray-700 hover:text-green-500 transition-colors" />
           }
         </button>
-        <span className={cn('flex-1 text-sm', task.completed ? 'line-through text-gray-600' : 'text-gray-200')}>
+        <span className={cn('flex-1 text-base', task.completed ? 'line-through text-gray-600' : 'text-gray-200')}>
           {task.title}
         </span>
         <div className="flex items-center gap-2 shrink-0">
           <DurationBadge minutes={task.est_duration} />
           {task.priority_level && <PriorityBadge level={task.priority_level} />}
+          {task.due_date && (
+            <span className="text-xs text-gray-500">
+              {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          )}
+          {!task.due_date && (
+            <span className="text-xs text-gray-700">no due date</span>
+          )}
           <button
             onClick={() => onEditTask(task)}
             className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-600 hover:text-white"
@@ -1381,6 +1495,11 @@ export default function Dashboard() {
   }
 
   async function handleResolveProject(projectId) {
+    const project = directory.find(p => p.project_id === projectId)
+    if (!project || !project.task || project.task.length === 0 || !project.task.every(t => t.completed)) {
+      toast.error('Complete all tasks before resolving this project')
+      return
+    }
     try {
       await api.patch(`/projects/${projectId}`, { resolved: true })
       toast.success('Project marked as resolved')
@@ -1564,8 +1683,8 @@ export default function Dashboard() {
           directory={directory}
           onClose={() => {
             setEditingTask(null)
-            api.get('/directory').then(({ data }) => setDirectory(data)).catch(() => {})
-            api.get('/tasks?standalone=true').then(({ data }) => setStandaloneTasks(Array.isArray(data) ? data : [])).catch(() => {})
+            fetchDirectory()
+            fetchStandaloneTasks()
           }}
           onSuccess={() => {
             setEditingTask(null)
