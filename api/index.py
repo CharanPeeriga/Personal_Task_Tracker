@@ -68,9 +68,8 @@ def get_my_projects(supabase: Client = Depends(get_supabase_client)):
 class ProjectCreate(BaseModel):
     title: str
     description: Optional[str] = None
-    deadline: Optional[datetime] = None
-    priority_level: Optional[int] = None
     due_date: Optional[datetime] = None
+    priority_level: Optional[int] = None
 
 class ProjectUpdate(BaseModel):
     title: Optional[str] = None
@@ -78,7 +77,9 @@ class ProjectUpdate(BaseModel):
     deadline: Optional[datetime] = None
     isarchived: Optional[bool] = None  # Notice this is all lowercase!
     priority_level: Optional[int] = None
-    due_date: Optional[datetime] = None
+
+class ProjectPatch(BaseModel):
+    resolved: Optional[bool] = None
 
 # --- Task Models ---
 class TaskCreate(BaseModel):
@@ -86,7 +87,7 @@ class TaskCreate(BaseModel):
     est_duration: Optional[int] = None
     priority_level: Optional[int] = None
     completed: Optional[bool] = False
-    project_id: int  # Required!
+    project_id: int  # NOT NULL in DB — required
     block_id: Optional[int] = None
     due_date: Optional[datetime] = None
 
@@ -176,6 +177,16 @@ def delete_project(project_id: int, supabase: Client = Depends(get_supabase_clie
     response = supabase.table("project").delete().eq("project_id", project_id).execute()
     return {"message": f"Project {project_id} deleted successfully"}
 
+@app.patch("/projects/{project_id}")
+def patch_project(project_id: int, patch: ProjectPatch, supabase: Client = Depends(get_supabase_client)):
+    update_data = {}
+    if patch.resolved is not None:
+        update_data["isarchived"] = patch.resolved  # column name: isarchived (no underscore)
+    if not update_data:
+        return {"message": "No fields provided to update"}
+    response = supabase.table("project").update(update_data).eq("project_id", project_id).execute()
+    return response.data
+
 
 # --- TASK ENDPOINTS ---
 
@@ -188,7 +199,9 @@ def create_task(task: TaskCreate, authorization: str = Header(...), supabase: Cl
     # 2. Prepare data
     task_data = task.dict(exclude_unset=True)
     task_data["user_id"] = user_response.user.id
-    if "due_date" in task_data and task_data["due_date"]:
+
+    # Serialize datetime fields for Supabase
+    if "due_date" in task_data and isinstance(task_data["due_date"], datetime):
         task_data["due_date"] = task_data["due_date"].isoformat()
 
     # 3. Insert securely
@@ -213,11 +226,19 @@ def update_task(task_id: int, task_update: TaskUpdate, supabase: Client = Depend
     if update_data.get("completed") is True and "completed_at" not in update_data:
         update_data["completed_at"] = datetime.utcnow().isoformat()
 
-    # Serialize datetime objects to strings for Supabase
+    # Serialize datetime objects to ISO strings for Supabase
     if "completed_at" in update_data and isinstance(update_data["completed_at"], datetime):
         update_data["completed_at"] = update_data["completed_at"].isoformat()
 
+    if "due_date" in update_data and isinstance(update_data["due_date"], datetime):
+        update_data["due_date"] = update_data["due_date"].isoformat()
+
     response = supabase.table("task").update(update_data).eq("task_id", task_id).execute()
+
+    # Surface Supabase errors explicitly for easier debugging
+    if hasattr(response, "error") and response.error:
+        raise HTTPException(status_code=400, detail=str(response.error))
+
     return response.data
 
 @app.delete("/tasks/{task_id}")
@@ -322,14 +343,21 @@ def create_block(block: BlockCreate, authorization: str = Header(...), supabase:
     user_response = supabase.auth.get_user(token)
     
     block_data = block.dict(exclude_unset=True)
-    # Convert datetimes to strings for Supabase
-    block_data["start_time"] = block_data["start_time"].isoformat()
-    block_data["end_time"] = block_data["end_time"].isoformat()
+    # Strip timezone info before serializing — start_time/end_time are
+    # "timestamp without time zone" in the DB; a Z-suffixed string would
+    # be rejected or silently coerced to the wrong value.
+    block_data["start_time"] = block_data["start_time"].replace(tzinfo=None).isoformat()
+    block_data["end_time"] = block_data["end_time"].replace(tzinfo=None).isoformat()
     block_data["user_id"] = user_response.user.id
 
     response = supabase.table("time_block").insert(block_data).execute()
     return response.data
 
+@app.delete("/blocks/{block_id}")
+def delete_block(block_id: int, supabase: Client = Depends(get_supabase_client)):
+    supabase.table("task").update({"block_id": None}).eq("block_id", block_id).execute()
+    supabase.table("time_block").delete().eq("block_id", block_id).execute()
+    return {"message": f"Block {block_id} deleted successfully"}
 
 
 # --- TAG ENDPOINTS ---

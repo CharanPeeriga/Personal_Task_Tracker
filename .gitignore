@@ -27,3 +27,6 @@ dist-ssr
 *.sw?
 
 __pycache__
+
+.claude
+CLAUDE.md

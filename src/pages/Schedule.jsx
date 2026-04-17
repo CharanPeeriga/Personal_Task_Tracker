@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import {
   ChevronLeft, ChevronRight, Calendar, Clock, Grid3x3,
-  Loader2, CheckCircle2, Circle, Plus,
+  Loader2, CheckCircle2, Circle, Plus, Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -243,7 +243,9 @@ export default function Schedule() {
   const [view, setView]                   = useState('month')
   const [isDialogOpen, setIsDialogOpen]   = useState(false)
   const [newBlock, setNewBlock]           = useState({ name: '', start_time: '', end_time: '' })
-  const [formLoading, setFormLoading]     = useState(false)
+  const [formLoading, setFormLoading]         = useState(false)
+  const [confirmDeleteBlockId, setConfirmDeleteBlockId] = useState(null)
+  const [deletingBlockId, setDeletingBlockId] = useState(null)
 
   const fetchBlocks = useCallback(async () => {
     setLoading(true)
@@ -272,10 +274,13 @@ export default function Schedule() {
     e.preventDefault()
     setFormLoading(true)
     try {
+      // Send datetime-local values directly (YYYY-MM-DDTHH:mm) without
+      // converting to ISO — start_time/end_time are "timestamp without time
+      // zone" in the DB, so a Z-suffixed UTC string would be wrong.
       await api.post('/blocks', {
         name:       newBlock.name,
-        start_time: new Date(newBlock.start_time).toISOString(),
-        end_time:   new Date(newBlock.end_time).toISOString(),
+        start_time: newBlock.start_time,
+        end_time:   newBlock.end_time,
       })
       toast.success(`Time block "${newBlock.name}" created`)
       setIsDialogOpen(false)
@@ -285,6 +290,20 @@ export default function Schedule() {
       toast.error(err?.response?.data?.detail ?? 'Failed to create time block')
     } finally {
       setFormLoading(false)
+    }
+  }
+
+  async function handleDeleteBlock(blockId) {
+    setDeletingBlockId(blockId)
+    try {
+      await api.delete(`/blocks/${blockId}`)
+      toast.success('Time block deleted')
+      setConfirmDeleteBlockId(null)
+      await fetchBlocks()
+    } catch (err) {
+      toast.error(err?.response?.data?.detail ?? 'Failed to delete block')
+    } finally {
+      setDeletingBlockId(null)
     }
   }
 
@@ -454,20 +473,49 @@ export default function Schedule() {
                         <span className="ml-1 text-gray-600">· {blockDuration(block)} min</span>
                       </p>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      neon={false}
-                      onClick={() => handleAutoFill(block.block_id)}
-                      disabled={loadingBlockId === block.block_id}
-                      className="shrink-0 text-xs"
-                    >
-                      {loadingBlockId === block.block_id
-                        ? <Loader2 className="h-3 w-3 animate-spin" />
-                        : 'Auto-Fill'
-                      }
-                    </Button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        neon={false}
+                        onClick={() => handleAutoFill(block.block_id)}
+                        disabled={loadingBlockId === block.block_id}
+                        className="text-xs"
+                      >
+                        {loadingBlockId === block.block_id
+                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : 'Auto-Fill'
+                        }
+                      </Button>
+                      <button
+                        onClick={() => setConfirmDeleteBlockId(block.block_id)}
+                        className="text-gray-600 hover:text-red-400 transition-colors p-1"
+                        title="Delete block"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
+                  {confirmDeleteBlockId === block.block_id && (
+                    <div className="flex items-center justify-between gap-2 rounded-lg bg-red-950/30 border border-red-900/30 px-3 py-2">
+                      <span className="text-xs text-red-400">Delete this block?</span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setConfirmDeleteBlockId(null)}
+                          className="text-xs text-gray-400 hover:text-white transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBlock(block.block_id)}
+                          disabled={deletingBlockId === block.block_id}
+                          className="text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                        >
+                          {deletingBlockId === block.block_id ? 'Deleting…' : 'Delete'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Tasks */}
                   {block.task && block.task.length > 0 ? (
