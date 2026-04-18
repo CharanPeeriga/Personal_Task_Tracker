@@ -492,7 +492,7 @@ export default function Schedule() {
     recurrence_start: '', recurrence_end: '',
   })
 
-  // Project detail state (Change 5)
+  // project detail modal state
   const [detailProject, setDetailProject]   = useState(null)
   const [detailLoading, setDetailLoading]   = useState(false)
 
@@ -1379,7 +1379,7 @@ export default function Schedule() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Project Detail Modal (Change 5) ── */}
+      {/* ── Project Detail Modal ── */}
       {detailProject && (
         <ScheduleProjectModal
           project={detailProject}
